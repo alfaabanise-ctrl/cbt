@@ -7,11 +7,11 @@
   </div>
 </template>
 <script setup>
-import { initializeDatabase,  getDictDB} from "~/platforms"
+import platform from "~/platforms"
 
 onMounted(async () => {
-    await getDictDB()
-    await initializeDatabase()
+    await platform.dicDatase.getDictDB()
+    await platform.database.initializeDatabase()
 
 })
 </script>

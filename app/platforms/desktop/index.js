@@ -1,2 +1,5 @@
 export * as settings from "./settings"
 export * as examHistory from "./examHistory"
+export * as lesson from "./lesson"
+export * as database from "./database"
+export * as dicDatase from  "./dictionary"
