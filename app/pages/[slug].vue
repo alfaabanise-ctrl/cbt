@@ -280,7 +280,7 @@ const openLessonBySlug = async (slug) => {
   sidebarOpen.value = false
 
   await loadLesson(slug)
-  prevLesson.value = await adjacentLesson('prev')
+  prevLesson.value = await adjacentLesson('previous')
   nextLesson.value = await adjacentLesson('next')
 
   const owner = sidebar.value.find((s) =>

@@ -172,13 +172,14 @@ export function useLessons() {
 
   const loadSidebar = async () => {
 
-    loading.value = true
+    loading.value = false
     error.value = null
 
     try {
 
       sidebar.value = await platform.lesson.getSidebar()
-
+      console.log(sidebar.value, 'sidebar.value');
+      
     } catch (err) {
 
       console.error(
@@ -192,6 +193,8 @@ export function useLessons() {
 
       loading.value = false
     }
+    console.log(loading.value,'loading.value');
+    
   }
 
   // --------------------------------------------------
@@ -233,17 +236,16 @@ export function useLessons() {
   // NEXT / PREVIOUS
   // --------------------------------------------------
 
-  const adjacentLesson = async (
-    direction: "next" | "previous" = "next"
-  ) => {
+  const adjacentLesson = async (direction: "next" | "prev" = "next" ) => {
 
     if (!currentLesson.value) {
       return null
     }
+console.log(currentLesson.value, direction);
 
-    return await platform.lesson.lesson.getAdjacentLesson(
-      currentLesson.value.topic_id,
-      currentLesson.value.order_index,
+    return await (platform.lesson.getAdjacentLesson as any)(
+      currentLesson.value.topic_id ?? currentLesson.value.topicId ,
+      currentLesson.value.order_index?? currentLesson.value.orderIndex,
       direction
     )
   }

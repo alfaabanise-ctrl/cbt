@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import {
-  computed,
-  onMounted,
-  ref,
-} from 'vue'
+import {  computed,  onMounted, ref, } from 'vue'
 
-import Database from '@tauri-apps/plugin-sql'
-import { readTextFile } from '@tauri-apps/plugin-fs'
-import { resourceDir } from '@tauri-apps/api/path'
+
+import platform from '~/platforms'
+const isTauri = computed(() => {
+  return import.meta.client && !!window.__TAURI_INTERNALS__
+})
 
 const props = defineProps({
   database: {
@@ -52,64 +50,7 @@ const showJson = ref(false)
 const expandedTopics = ref({})
 const importedBlocks = ref([])
 
-async function getDB() {
-  if (db.value) return db.value
-  db.value = await Database.load(props.database)
-  return db.value
-}
 
-async function testDatabase() {
-  try {
-    const database = await getDB()
-    const tables = await database.select(`
-      SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name
-    `)
-    console.log('========== SQLITE DATABASE ==========')
-    console.log('Database:', props.database)
-    console.log('Tables:', tables)
-    return tables
-  } catch (error) {
-    console.error('Database connection failed:', error)
-    throw error
-  }
-}
-
-async function verifyImport(subjectId) {
-  const database = await getDB()
-
-  const subjects = await database.select(
-    `SELECT id, name, icon FROM subjects WHERE id = ? LIMIT 1`,
-    [subjectId],
-  )
-
-  const topics = await database.select(
-    `SELECT id, subject_id, topic_number, title, order_index FROM topics WHERE subject_id = ? ORDER BY order_index ASC`,
-    [subjectId],
-  )
-
-  const lessons = await database.select(
-    `SELECT id, topic_id, subject_id, topic_number, slug, title, summary, blocks, search_text, order_index FROM lessons WHERE subject_id = ? ORDER BY topic_id ASC, order_index ASC`,
-    [subjectId],
-  )
-
-  const result = {
-    subjectCount: subjects.length,
-    topicCount: topics.length,
-    lessonCount: lessons.length,
-    subjects,
-    topics,
-    lessons,
-  }
-
-  console.log('========== SQLITE IMPORT VERIFICATION ==========')
-  console.log('Database:', props.database)
-  console.log('Subject:', subjects)
-  console.log('Topics:', topics.length)
-  console.log('Lessons:', lessons.length)
-  console.log('Verification:', result)
-
-  return result
-}
 
 const statusText = computed(() => {
   switch (status.value) {
@@ -933,183 +874,26 @@ function clearImporter() {
   showJson.value = false
 }
 
-async function subjectExists(subjectId) {
-  const database = await getDB()
-  const rows = await database.select('SELECT id FROM subjects WHERE id = ? LIMIT 1', [subjectId])
-  return rows.length > 0
-}
 
-async function topicExists(topicId) {
-  const database = await getDB()
-  const rows = await database.select('SELECT id FROM topics WHERE id = ? LIMIT 1', [topicId])
-  return rows.length > 0
-}
 
-async function lessonExists(lessonId) {
-  const database = await getDB()
-  const rows = await database.select('SELECT id FROM lessons WHERE id = ? LIMIT 1', [lessonId])
-  return rows.length > 0
-}
 
-async function getMaxTopicNumber(subjectId) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT COALESCE(MAX(CAST(topic_number AS INTEGER)), 0) AS n FROM topics WHERE subject_id = ?',
-    [subjectId],
-  )
-  return Number(rows?.[0]?.n || 0)
-}
 
-async function getMaxTopicOrder(subjectId) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT COALESCE(MAX(order_index), -1) AS n FROM topics WHERE subject_id = ?',
-    [subjectId],
-  )
-  return Number(rows?.[0]?.n ?? -1)
-}
 
-async function getMaxLessonOrder(topicId) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT COALESCE(MAX(order_index), -1) AS n FROM lessons WHERE topic_id = ?',
-    [topicId],
-  )
-  return Number(rows?.[0]?.n ?? -1)
-}
 
-async function getTopic(topicId) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT id, subject_id, topic_number, title, order_index FROM topics WHERE id = ? LIMIT 1',
-    [topicId],
-  )
-  return rows?.[0] || null
-}
 
-async function getTopicByTitle(subjectId, title) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT id, subject_id, topic_number, title, order_index FROM topics WHERE subject_id = ? AND lower(trim(title)) = lower(trim(?)) LIMIT 1',
-    [subjectId, title],
-  )
-  return rows?.[0] || null
-}
 
-async function getLesson(lessonId) {
-  const database = await getDB()
-  const rows = await database.select(
-    'SELECT id, topic_id, subject_id, topic_number, slug, title, summary, blocks, search_text, order_index FROM lessons WHERE id = ? LIMIT 1',
-    [lessonId],
-  )
-  return rows?.[0] || null
-}
 
-async function ensureSubject(subjectName, subjectId) {
-  const database = await getDB()
-  const existing = await database.select(
-    'SELECT id, name, icon FROM subjects WHERE id = ? LIMIT 1',
-    [subjectId],
-  )
 
-  if (existing.length) {
-    await database.execute('UPDATE subjects SET name = ?, icon = ? WHERE id = ?', [
-      subjectName,
-      props.icon || null,
-      subjectId,
-    ])
-    return 'existing'
-  }
 
-  await database.execute('INSERT INTO subjects (id, name, icon) VALUES (?, ?, ?)', [
-    subjectId,
-    subjectName,
-    props.icon || null,
-  ])
-  return 'inserted'
-}
 
-async function ensureTopic({ topicId, subjectId, topicNumber, title, orderIndex }) {
-  const database = await getDB()
-  const existing = await getTopic(topicId)
 
-  if (existing) {
-    await database.execute('UPDATE topics SET subject_id = ?, title = ? WHERE id = ?', [
-      subjectId,
-      title,
-      topicId,
-    ])
-    return 'existing'
-  }
 
-  await database.execute(
-    'INSERT INTO topics (id, subject_id, topic_number, title, order_index) VALUES (?, ?, ?, ?, ?)',
-    [topicId, subjectId, String(topicNumber), title, orderIndex],
-  )
-  return 'inserted'
-}
 
-async function upsertLesson(row) {
-  const database = await getDB()
-  const existing = await getLesson(row.id)
 
-  if (existing) {
-    await database.execute(
-      `UPDATE lessons SET
-        topic_id = ?, subject_id = ?, topic_number = ?, slug = ?, title = ?, summary = ?, blocks = ?, search_text = ?, order_index = ?
-      WHERE id = ?`,
-      [
-        row.topic_id,
-        row.subject_id,
-        row.topic_number,
-        row.slug,
-        row.title,
-        row.summary,
-        row.blocks,
-        row.search_text,
-        row.order_index,
-        row.id,
-      ],
-    )
-    return 'updated'
-  }
 
-  await database.execute(
-    `INSERT INTO lessons (id, topic_id, subject_id, topic_number, slug, title, summary, blocks, search_text, order_index)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      row.id,
-      row.topic_id,
-      row.subject_id,
-      row.topic_number,
-      row.slug,
-      row.title,
-      row.summary,
-      row.blocks,
-      row.search_text,
-      row.order_index,
-    ],
-  )
-  return 'inserted'
-}
 
-async function rebuildFTS(database) {
-  try {
-    const fts = await database.select(
-      "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'lessons_fts' LIMIT 1",
-    )
-    if (!fts.length) {
-      console.log('lessons_fts does not exist. FTS rebuild skipped.')
-      return false
-    }
-    await database.execute("INSERT INTO lessons_fts(lessons_fts) VALUES ('rebuild')")
-    console.log('lessons_fts rebuilt successfully.')
-    return true
-  } catch (error) {
-    console.warn('FTS rebuild skipped:', error)
-    return false
-  }
-}
+
+
 
 async function importCurriculum() {
   if (importing.value) return
@@ -1131,21 +915,99 @@ async function importCurriculum() {
     const curriculum = parsedCurriculum.value
     if (!curriculum) throw new Error('Curriculum data could not be parsed.')
 
-    const database = await getDB()
+    if (!isTauri.value) {
+
+      console.log(
+        "🌐 Web mode → backend import"
+      )
+
+      /*
+       * IMPORTANT:
+       *
+       * We send the blocks generated by
+       * convertLesson(), because your backend
+       * should save the final blocks.
+       */
+
+      const backendCurriculum =
+        JSON.parse(
+          JSON.stringify(curriculum)
+        )
+
+      /*
+       * Convert lessons to the same structure
+       * your SQLite importer creates.
+       */
+      const lessons =
+        backendCurriculum.lessons || {}
+
+      for (
+        const [lessonKey, entry]
+        of Object.entries(lessons)
+      ) {
+
+        const lesson =
+          entry?.lesson ?? entry
+
+        if (
+          !lesson ||
+          typeof lesson !== 'object'
+        ) {
+          continue
+        }
+
+        lesson.blocks =
+          convertLesson(lesson)
+      }
+
+      const response =  await platform.lesson.importCurriculum(
+          backendCurriculum
+        )
+
+      if (!response?.success) {
+
+        throw new Error(
+          response?.message ||
+          "Backend import failed."
+        )
+      }
+
+      importResult.value = {
+        ...(response.data || {}),
+        message:
+          response.message ||
+          "Curriculum imported successfully."
+      }
+
+      status.value = 'success'
+
+      emit(
+        'imported',
+        importResult.value
+      )
+
+      return importResult.value
+    }
+  console.log(' is tauri', isTauri.value);
 
     const requiredTables = ['subjects', 'topics', 'lessons']
-    const existingTables = await database.select(
-      "SELECT name FROM sqlite_master WHERE type = 'table'",
-    )
+    const existingTables = await platform.lesson.getDatabaseTables()
+    console.log(existingTables,'existingTables ');
+    
     const tableNames = new Set(existingTables.map(table => table.name))
+
+  console.log(tableNames, 'tableNames');
+
 
     for (const table of requiredTables) {
       if (!tableNames.has(table)) {
         throw new Error(`Required database table "${table}" does not exist.`)
       }
     }
+    console.log(requiredTables,'requiredTables');
+    
 
-    await database.execute('BEGIN TRANSACTION')
+    await platform.lesson.beginTransaction()
     transactionStarted = true
 
     const subjectName = props.subjectName || curriculum.subject || 'Untitled Subject'
@@ -1153,10 +1015,10 @@ async function importCurriculum() {
 
     if (!subjectId) throw new Error('Unable to determine subject ID.')
 
-    const subjectAction = await ensureSubject(subjectName, subjectId)
+    const subjectAction = await platform.lesson.ensureSubject(subjectName, subjectId)
 
-    let nextTopicNumber = (await getMaxTopicNumber(subjectId)) + 1
-    let nextTopicOrder = (await getMaxTopicOrder(subjectId)) + 1
+    let nextTopicNumber = (await platform.lesson.getMaxTopicNumber(subjectId)) + 1
+    let nextTopicOrder = (await platform.lesson.getMaxTopicOrder(subjectId)) + 1
 
     const topicIdMap = {}
     let topicsInserted = 0
@@ -1171,10 +1033,10 @@ async function importCurriculum() {
 
       topicIdMap[topicCode] = topicId
 
-      const existing = await getTopic(topicId)
+      const existing = await platform.lesson.getTopic(topicId)
 
       if (existing) {
-        await ensureTopic({
+        await platform.lesson.ensureTopic({
           topicId,
           subjectId,
           topicNumber: existing.topic_number,
@@ -1183,7 +1045,7 @@ async function importCurriculum() {
         })
         topicsUpdated++
       } else {
-        await ensureTopic({
+        await platform.lesson.ensureTopic({
           topicId,
           subjectId,
           topicNumber: nextTopicNumber,
@@ -1229,9 +1091,9 @@ async function importCurriculum() {
         const fallbackTopicName = lesson?.topic || topicCode
         topicId = `${subjectId}-${slugify(fallbackTopicName)}`
 
-        let existing = await getTopic(topicId)
+        let existing = await platform.lesson.getTopic(topicId)
         if (!existing) {
-          existing = await getTopicByTitle(subjectId, fallbackTopicName)
+          existing = await platform.lesson.getTopicByTitle(subjectId, fallbackTopicName)
           if (existing) topicId = existing.id
         }
 
@@ -1252,7 +1114,7 @@ async function importCurriculum() {
       }
 
       if (orderCounters[topicId] == null) {
-        orderCounters[topicId] = (await getMaxLessonOrder(topicId)) + 1
+        orderCounters[topicId] = (await platform.lesson.getMaxLessonOrder(topicId)) + 1
       }
 
       const blocks = convertLesson(lesson)
@@ -1286,7 +1148,7 @@ async function importCurriculum() {
       const topicNumber = lesson?.syllabusReference || ''
       const summary = String(lesson?.introduction || '').replace(/\s+/g, ' ').trim().slice(0, 200)
 
-      const existingLesson = await getLesson(lessonId)
+      const existingLesson = await platform.lesson.getLessonId(lessonId)
 
       let orderIndex
       if (existingLesson) {
@@ -1308,7 +1170,7 @@ async function importCurriculum() {
         order_index: orderIndex,
       }
 
-      const action = await upsertLesson(row)
+      const action = await platform.lesson.upsertLesson(row)
       if (action === 'inserted') inserted++
       if (action === 'updated') updated++
 
@@ -1317,11 +1179,11 @@ async function importCurriculum() {
       }
     }
 
-    const ftsRebuilt = await rebuildFTS(database)
-    await database.execute('COMMIT')
+    const ftsRebuilt = await platform.lesson.rebuildFTS()
+    await  platform.lesson.commitTransaction()
     transactionStarted = false
 
-    const verification = await verifyImport(subjectId)
+    const verification = await platform.lesson.verifyImport(subjectId)
 
     importResult.value = {
       subject: subjectName,
@@ -1348,8 +1210,8 @@ async function importCurriculum() {
 
     if (transactionStarted) {
       try {
-        const database = await getDB()
-        await database.execute('ROLLBACK')
+       
+        await platform.lesson.rollbackTransaction()
         console.log('Curriculum import rolled back.')
       } catch (rollbackError) {
         console.error('Rollback failed:', rollbackError)
@@ -1364,6 +1226,8 @@ async function importCurriculum() {
     importing.value = false
   }
 }
+
+
 
 function naturalLessonSort(a, b) {
   const aParts = String(a).split('.')
