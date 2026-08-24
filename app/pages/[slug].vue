@@ -158,7 +158,7 @@
           <h1 class="text-3xl font-bold text-slate-900 sm:text-4xl">
             {{ currentLesson.title }}  <TopicImporter
                 
-                  :lesson-id="currentLesson.id" 
+                  :lesson-id="currentLesson.id ?? currentLesson.lessonId" 
                    @updated="handleLessonUpdated"
                
               />

@@ -121,6 +121,34 @@ export async function getLesson(
 }
 
 
+
+export async function getLessonId(
+  id: string
+): Promise<Lesson | null> {
+
+  const response =
+    await useApiFetch<Lesson>(
+      `/api/lessons/id/${encodeURIComponent(id)}`
+    )
+
+    console.log(  id, 'responseresponseresponseresponse');
+    
+  if (!response.success) {
+
+    if (response.status === 404) {
+      return null
+    }
+
+    throw new Error(
+      response.message ||
+      "Failed to load lesson"
+    )
+  }
+
+
+  return response.data.data ?? null
+}
+
 /*
 |--------------------------------------------------------------------------
 | ADJACENT LESSON

@@ -7,8 +7,11 @@ import {
   ref,
   watch,
 } from 'vue'
-
+import platform from '~/platforms'
 import Database from '@tauri-apps/plugin-sql'
+const isTauri = computed(() => {
+  return import.meta.client && !!window.__TAURI_INTERNALS__
+})
 
 /*
 |--------------------------------------------------------------------------
@@ -166,35 +169,35 @@ const statusClass = computed(() => {
 |
 */
 
-async function getLesson(
-  lessonId,
-) {
-  const database =
-    await getDB()
+// async function getLesson(
+//   lessonId,
+// ) {
+//   const database =
+//     await getDB()
 
-  const rows =
-    await database.select(
-      `
-      SELECT
-        id,
-        topic_id,
-        subject_id,
-        topic_number,
-        slug,
-        title,
-        summary,
-        blocks,
-        search_text,
-        order_index
-      FROM lessons
-      WHERE id = ?
-      LIMIT 1
-      `,
-      [lessonId],
-    )
+//   const rows =
+//     await database.select(
+//       `
+//       SELECT
+//         id,
+//         topic_id,
+//         subject_id,
+//         topic_number,
+//         slug,
+//         title,
+//         summary,
+//         blocks,
+//         search_text,
+//         order_index
+//       FROM lessons
+//       WHERE id = ?
+//       LIMIT 1
+//       `,
+//       [lessonId],
+//     )
 
-  return rows?.[0] || null
-}
+//   return rows?.[0] || null
+// }
 
 /*
 |--------------------------------------------------------------------------
@@ -255,35 +258,28 @@ function buildLessonJson(
 ) {
   return {
     id: row.id,
+    lessonId: row.lessonId ,
+    topic_id: row.topic_id   ,
+    topicId:  row.topicId ,
+    subject_id: row.subject_id ,
+    subjectId: row.subjectId,
+    topic_number: row.topic_number,
+    topicNumber: row.topicNumber,
+    slug: row.slug,
 
-    topic_id:
-      row.topic_id,
+    title:  row.title,
 
-    subject_id:
-      row.subject_id,
-
-    topic_number:
-      row.topic_number,
-
-    slug:
-      row.slug,
-
-    title:
-      row.title,
-
-    summary:
-      row.summary,
+    summary:  row.summary,
 
     blocks:
       parseBlocks(
         row.blocks,
       ),
 
-    search_text:
-      row.search_text,
-
-    order_index:
-      row.order_index,
+    search_text:  row.search_text,
+    searchText: row.searchText,
+    order_index: row.order_index  ,
+    orderIndex: row.orderIndex
   }
 }
 
@@ -294,6 +290,8 @@ function buildLessonJson(
 */
 
 async function loadLesson() {
+  console.log(props.lessonId , 'FFFFFFFFFFFFFFF');
+  
   if (
     props.lessonId === null ||
     props.lessonId === undefined ||
@@ -316,16 +314,20 @@ async function loadLesson() {
   successMessage.value = ''
 
   try {
+    console.log('LOODING');
+    
     const row =
-      await getLesson(
+      await platform.lesson.getLessonId(
         props.lessonId,
       )
+      console.log(row,' FDFGDSFSDGSDFGDSDFGSDFGSDFG');
+      
 
-    if (!row) {
-      throw new Error(
-        `Lesson with ID "${props.lessonId}" was not found in the database.`,
-      )
-    }
+    // if (!row) {
+    //   throw new Error(
+    //     `Lesson with ID "${props.lessonId}" was not found in the database.`,
+    //   )
+    // }
 
     lesson.value = row
 
@@ -385,38 +387,36 @@ function validateJson() {
   errorMessage.value = ''
 
   try {
-    const parsed =
-      JSON.parse(
-        jsonText.value,
-      )
-
-    if (
-      parsed === null ||
-      typeof parsed !== 'object'
-    ) {
+    const parsed =  JSON.parse(jsonText.value,)
+      console.log(parsed, 'parsedparsed');
+      
+    if (  parsed === null ||  typeof parsed !== 'object'  ) {
+        console.log(parsed === null ||  typeof parsed !== 'object');
+        
       throw new Error(
         'The JSON root must be an object.',
       )
     }
-
+  console.log('hhhhhhxxxxxxxxx');
+  
     /*
      * The editor represents one lesson.
      */
+    console.log(Object.prototype.hasOwnProperty.call( parsed,'lessonId',));
+    
+    if ( !Object.prototype.hasOwnProperty.call(parsed, 'id') &&  !Object.prototype.hasOwnProperty.call(parsed, 'lessonId') ) {
+      console.log('Neither id nor lessonId exists');
 
-    if (
-      !Object.prototype.hasOwnProperty.call(
-        parsed,
-        'id',
-      )
-    ) {
       throw new Error(
-        'JSON must contain an "id" field.',
-      )
+        'JSON must contain either an "id" or "lessonId" field.'
+      );
     }
+    console.log('passs heard');
+    
 
     if (
       String(parsed.id) !==
-      String(props.lessonId)
+      String(props.lessonId) &&   String(parsed.lessonId) !==  String(props.lessonId)
     ) {
       throw new Error(
         `You cannot change the lesson ID. Expected "${props.lessonId}" but received "${parsed.id}".`,
@@ -539,11 +539,199 @@ function generateSearchText(
 |
 */
 
-async function saveLesson() {
+
+async function websaveLesson() {
   if (saving.value) {
     return
   }
+  console.log('SDFSDlessonIdlessonId');
+  
+  errorMessage.value = ''
+  successMessage.value = ''
 
+  /*
+   * Validate JSON first.
+   */
+  const parsed = validateJson()
+
+  if (!parsed) {
+    console.log('gggg');
+    
+    return
+  }
+
+  saving.value = true
+  status.value = 'saving'
+
+  try {
+    /*
+     * The ID comes from the existing lesson.
+     * The editor JSON cannot change it.
+     */
+    const lessonId =
+      props.lessonId
+
+
+    console.log(lessonId, 'jksdhaskjdhaskd askjdhaskdjhasdkjash asjkdhasjkdhas');
+    
+    if (!lessonId) {
+      throw new Error('Lesson ID is required.')
+    }
+
+    /*
+     * Send the lesson to the BACKEND.
+     *
+     * Do NOT send database-specific fields
+     * such as the primary ID inside the JSON.
+     */
+    console.log(lessonId,'lessonIdlessonIdlessonIdlessonIdlessonIdlessonId');
+    
+    const response = await useApiFetch(
+      `/api/lessons/${lessonId}`,
+      {
+        method: 'PUT',
+
+        body: {
+          title:
+            parsed.title ??
+            lesson.value?.title ??
+            'Untitled Lesson',
+
+          summary:
+            parsed.summary ??
+            lesson.value?.summary ??
+            '',
+
+          blocks:
+            parsed.blocks ??
+            [],
+
+          slug:
+            parsed.slug ??
+            lesson.value?.slug ??
+            '',
+
+          topicId:
+            parsed.topicId ??
+            lesson.value?.topicId ??
+            null,
+
+          subjectId:
+            parsed.subjectId ??
+            lesson.value?.subjectId ??
+            null,
+
+          topicNumber:
+            parsed.topicNumber ??
+            lesson.value?.topicNumber ??
+            null,
+
+          orderIndex:
+            parsed.orderIndex ??
+            lesson.value?.orderIndex ??
+            0,
+
+          searchText:
+            parsed.search_text !== undefined
+              ? String(parsed.searchText || '')
+              : generateSearchText(parsed),
+        },
+      },
+    )
+
+    console.log(
+      'Lesson backend update result:',
+      response.data,
+    )
+
+    /*
+     * Backend should return the updated lesson.
+     */
+    const updatedLesson =
+      response.lesson ?? response.data.lesson ?? response
+
+    if (!updatedLesson) {
+      throw new Error(
+        'Lesson was updated but the backend returned no lesson.',
+      )
+    }
+
+    /*
+     * Update local editor state.
+     */
+    lesson.value =
+      updatedLesson
+
+    const updatedJson =
+      JSON.stringify(
+        buildLessonJson(
+          updatedLesson,
+        ),
+        null,
+        2,
+      )
+
+    jsonText.value =
+      updatedJson
+
+    originalJsonText.value =
+      updatedJson
+
+    status.value =
+      'success'
+
+    successMessage.value =
+      'Lesson updated successfully.'
+    saving.value = false
+    /*
+     * Tell the parent that the lesson changed.
+     *
+     * Only send the ID.
+     */
+    emit(
+      'updated',
+      lessonId,
+    )
+
+    window.setTimeout(() => {
+      if (
+        status.value ===
+        'success'
+      ) {
+        status.value =
+          'idle'
+      }
+
+      successMessage.value =
+        ''
+    }, 3000)
+
+  } catch (error) {
+    console.error(
+      'Failed to update lesson:',
+      error,
+    )
+
+    status.value =
+      'error'
+
+    errorMessage.value =
+      error?.data?.message ||
+      error?.message ||
+      String(error)
+
+  } finally {
+    saving.value = false
+  }
+}
+async function saveLesson() {
+  console.log('offff');
+  
+  if (!isTauri.value) {
+   await websaveLesson()
+    return
+  }
+console.log('offfssssssf');
   errorMessage.value = ''
 
   successMessage.value = ''
@@ -564,6 +752,10 @@ async function saveLesson() {
   status.value = 'saving'
 
   try {
+    if (!isTauri) {
+
+      return
+    }
     const database =
       await getDB()
 
@@ -1057,7 +1249,7 @@ onUnmounted(() => {
 <template>
 <div>
   <button @click="showedit = true" class="p-2 fixed  right-0 top-40  hover:bg-gray-100 rounded">
-  <Icon name="lucide:pencil" class="w-5 h-5" />
+  <Icon name="lucide:pencil" class="w-5 h-5" /> 
 </button>
     <div   v-if="showedit" class=" fixed   top-0 left-0  w-full ">
   
