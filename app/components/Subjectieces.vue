@@ -13,7 +13,7 @@
         <Icon name="lucide:house" class="h-5 w-5" />
       </button>
     </header>
-<Migrating/>
+
     <main class="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
       <div v-if="!sidebar.length" class="flex h-full items-center justify-center">
         <Icon name="lucide:loader-2" class="h-6 w-6 animate-spin text-ink-soft" />
@@ -25,6 +25,7 @@
           :key="subject.id"
           class="rounded-xl border border-line bg-surface p-5 shadow-[0_1px_2px_rgba(36,48,74,0.04)]"
         >
+       
           <div class="mb-3 flex items-center gap-3">
             <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-bg text-navy">
               <Icon :name="subject.icon || 'lucide:book-open'" class="h-5 w-5" />
@@ -59,6 +60,9 @@ const { sidebar, loadSidebar } = useLessons()
 
 onMounted(() => {
   loadSidebar()
+  
+  console.log(sidebar,'sidebar');
+  
 })
 </script>
 

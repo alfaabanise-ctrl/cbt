@@ -31,7 +31,7 @@ async function getDB() {
 
   return db
 }
-
+ 
 async function deleteSubject(database: any) {
   const subjects = await database.select(
     `
@@ -82,6 +82,7 @@ async function deleteSubject(database: any) {
 }
 
 async function deleteTopic(database: any) {
+
   const topics = await database.select(
     `
     SELECT id

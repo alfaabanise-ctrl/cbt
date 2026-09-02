@@ -893,6 +893,39 @@ function clearImporter() {
 
 
 
+function getValidOrderIndex(value: unknown, fallback: number): number {
+  // Empty / null / undefined
+  if (
+    value === null ||
+    value === undefined ||
+    String(value).trim() === ''
+  ) {
+    return fallback
+  }
+
+  // Only accept actual integers
+  if (typeof value === 'number') {
+    return Number.isInteger(value) && value > 0
+      ? value
+      : fallback
+  }
+
+  // Accept numeric strings such as "1", "2", "10"
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+
+    if (/^\d+$/.test(trimmed)) {
+      const number = Number(trimmed)
+
+      if (Number.isInteger(number) && number > 0) {
+        return number
+      }
+    }
+  }
+
+  // Anything invalid → last index + 1
+  return fallback
+}
 
 
 async function importCurriculum() {
@@ -1151,11 +1184,39 @@ async function importCurriculum() {
       const existingLesson = await platform.lesson.getLessonId(lessonId)
 
       let orderIndex
+     
+     
+
       if (existingLesson) {
-        orderIndex = Number(existingLesson.order_index ?? 0)
+        // Get the last valid index for this topic
+        const lastIndex = Math.max(
+          0,
+          Number(orderCounters[topicId] || 1) - 1
+        )
+
+        // Keep existing index only if it is a valid integer.
+        // Otherwise use last index + 1.
+        orderIndex = getValidOrderIndex(
+          existingLesson.order_index,
+          lastIndex + 1
+        )
+
+        // Make sure the counter continues after the selected index
+        orderCounters[topicId] = Math.max(
+          Number(orderCounters[topicId] || 1),
+          orderIndex + 1
+        )
       } else {
-        orderIndex = orderCounters[topicId]
+        // New lesson
+        orderIndex = getValidOrderIndex(
+          orderCounters[topicId],
+          1
+        )
+
+        orderCounters[topicId] = orderIndex + 1
       }
+
+
 
       const row = {
         id: lessonId,

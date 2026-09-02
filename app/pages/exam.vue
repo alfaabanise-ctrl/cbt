@@ -616,6 +616,7 @@ const getQuestionClass = (question, index) => {
     v-model="showSubmitModal"
     @submit="submitExam"
   />
+
  <ExamTimer
     ref="timer"
     :duration="timeToSeconds(appState.examSettings.duration)"

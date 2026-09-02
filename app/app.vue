@@ -1,5 +1,5 @@
 <template>
-  <div class="h-dvh w-dvw overflow-hidden">
+  <div class="h-dvh  overflow-hidden w-dvw ">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
@@ -29,7 +29,8 @@ onMounted(async () => {
   try {
     await platform.dicDatase.getDictDB()
     await platform.database.initializeDatabase()
-
+    await platform.lesson.initializeLessonsDatabase()
+    await platform.lesson.getSidebar()
     console.log("Tauri databases initialized successfully")
   } catch (error) {
     console.error("Failed to initialize Tauri databases:", error)

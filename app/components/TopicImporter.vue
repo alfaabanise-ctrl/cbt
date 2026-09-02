@@ -914,7 +914,7 @@ console.log('offfssssssf');
      */
 
     const updatedLesson =
-      await getLesson(
+      await platform.lesson.getLessonId(
         lessonId,
       )
 

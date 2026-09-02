@@ -4,6 +4,8 @@
   style="background-image: url('/image/background.png')"
   >
 
+  
+
    
      <div class="   h-full   flex flex-col justify-center items-center"  >
     <!-- Main Content -->

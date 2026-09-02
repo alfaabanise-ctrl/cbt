@@ -8,6 +8,11 @@ export async function getDictDB() {
     const dbPath = await resolveResource("resources/dictionary.db")
     dictDb = await Database.load(`sqlite:${dbPath}`)
   }
+        const result = await dictDb.select(`
+    PRAGMA database_list
+  `)
+  console.log(result, 'the result is clean pls');
+  
   return dictDb
 }
 

@@ -1,382 +1,791 @@
-export async function findOne( db, table,
-where = {},
-  populate = []
-) {
-  // ------------------------------------------------
-  // Validate
-  // ------------------------------------------------
-  if (!db) {
-    throw new Error("Database instance is required.");
-  }
+import Database from "@tauri-apps/plugin-sql"
+import { resolveResource } from "@tauri-apps/api/path"
 
-  if (
-    !table ||
-    typeof table !== "string" ||
-    !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(table)
-  ) {
-    throw new Error("Invalid table name.");
-  }
+/**
+ * ============================================================
+ * LESSONS DATABASE
+ * ============================================================
+ */
 
-  if (
-    !where ||
-    typeof where !== "object" ||
-    Array.isArray(where)
-  ) {
-    throw new Error("Where must be an object.");
-  }
+type LessonsDatabase = Awaited<
+  ReturnType<typeof Database.load>
+>
 
-  const keys = Object.keys(where);
+let lessonsDb: LessonsDatabase | null = null
+let initializationPromise: Promise<void> | null = null
 
-  if (!keys.length) {
-    throw new Error("No search conditions provided.");
-  }
+/**
+ * ============================================================
+ * DATABASE 1 — APPLICATION DATABASE
+ * ============================================================
+ */
 
-  // ------------------------------------------------
-  // Query
-  // ------------------------------------------------
-  const sql = `
-    SELECT *
-    FROM ${table}
-    WHERE ${keys.map(k => `${k} = ?`).join(" AND ")}
-    LIMIT 1
-  `;
+async function getLessonsDB(): Promise<LessonsDatabase> {
 
-  const result = await db.get(
-    sql,
-    keys.map(k => where[k])
-  );
+  if (!lessonsDb) {
 
-  if (!result) return null;
+    console.log("📦 Opening application lessons.db...")
 
-  // ------------------------------------------------
-  // Populate
-  // ------------------------------------------------
-  for (const relation of populate) {
-    const {
-      path,
-      table: relationTable,
-      localKey = path,
-      foreignKey = "id",
-      many = false,
-      orderBy = "id",
-      transform
-    } = relation;
+    lessonsDb = await Database.load(
+      "sqlite:lessons.db"
+    )
 
-    if (
-      !relationTable ||
-      !/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(relationTable)
-    ) {
-      throw new Error(
-        `Invalid populate table "${relationTable}".`
-      );
-    }
-
-    const value = result[localKey];
-
-    if (value == null) continue;
-
-    if (many) {
-      let rows = await db.select(
-        `
-        SELECT *
-        FROM ${relationTable}
-        WHERE ${foreignKey} = ?
-        ORDER BY ${orderBy}
-        `,
-        [value]
-      );
-
-      if (typeof transform === "function") {
-        rows = transform(rows);
-      }
-
-      result[path] = rows;
-    } else {
-      let row = await db.get(
-        `
-        SELECT *
-        FROM ${relationTable}
-        WHERE ${foreignKey} = ?
-        LIMIT 1
-        `,
-        [value]
-      );
-
-      if (
-        row &&
-        typeof transform === "function"
-      ) {
-        row = transform(row);
-      }
-
-      result[path] = row;
-    }
-  }
-
-  // ------------------------------------------------
-  // save()
-  // ------------------------------------------------
-  Object.defineProperty(result, "save", {
-    enumerable: false,
-    value: async function () {
-      if (!this.id) {
-        throw new Error("Cannot save without id.");
-      }
-
-      const columns = Object.keys(this).filter(
-        key =>
-          ![
-            "id",
-            "save",
-            "reload",
-            "delete"
-          ].includes(key)
-      );
-
-      if (!columns.length) return this;
-
-      await db.run(
-        `
-        UPDATE ${table}
-        SET ${columns
-          .map(col => `${col} = ?`)
-          .join(", ")}
-        WHERE id = ?
-        `,
-        [
-          ...columns.map(col => this[col]),
-          this.id
-        ]
-      );
-
-      return this;
-    }
-  });
-
-  // ------------------------------------------------
-  // reload()
-  // ------------------------------------------------
-  Object.defineProperty(result, "reload", {
-    enumerable: false,
-    value: async function () {
-      const fresh = await db.get(
-        `
-        SELECT *
-        FROM ${table}
-        WHERE id = ?
-        LIMIT 1
-        `,
-        [this.id]
-      );
-
-      if (!fresh) return null;
-
-      Object.assign(this, fresh);
-
-      return this;
-    }
-  });
-
-  // ------------------------------------------------
-  // delete()
-  // ------------------------------------------------
-  Object.defineProperty(result, "delete", {
-    enumerable: false,
-    value: async function () {
-      await db.run(
-        `
-        DELETE FROM ${table}
-        WHERE id = ?
-        `,
-        [this.id]
-      );
-
-      return true;
-    }
-  });
-
-  return result;
-}
-//////Usage 
-// const result = await findOne(
-//   db,
-//   "results",
-//   { id: 1 },
-//   [
-//     {
-//       path: "userId",
-//       table: "users"
-//     },
-//     {
-//       path: "subjectId",
-//       table: "subjects"
-//     }
-//   ]
-// )
-
-const find = async (
-  db,
-  table,
-  where = {},
-  populate = []
-) => {
-  // Validate table
-  if (!table || typeof table !== "string") {
-    throw new Error("Table name is required.")
-  }
-
-  // Validate where
-  if (!where || typeof where !== "object" || Array.isArray(where)) {
-    throw new Error("Where must be an object.")
-  }
-
-  let sql = `SELECT * FROM ${table}`
-  let values = []
-
-  const keys = Object.keys(where)
-
-  if (keys.length) {
-    const conditions = keys
-      .map(key => `${key} = ?`)
-      .join(" AND ")
-
-    sql += ` WHERE ${conditions}`
-    values = Object.values(where)
-  }
-
-  // Execute query
-  const results = await db.all(sql, values)
-
-  // No populate
-  if (!populate.length) {
-    return results
-  }
-
-  // Populate each row
-  for (const row of results) {
-    for (const item of populate) {
-      const {
-        path,
-        table,
-        foreignKey = "id"
-      } = item
-
-      if (row[path] == null) continue
-
-      row[path] = await db.get(
-        `SELECT * FROM ${table} WHERE ${foreignKey} = ? LIMIT 1`,
-        [row[path]]
-      )
-    }
-  }
-
-  return results
-}
-
-/////USAGE
-// const results = await find(
-//   db,
-//   "results",
-//   { status: "active" },
-//   [
-//     {
-//       path: "userId",
-//       table: "users"
-//     },
-//     {
-//       path: "subjectId",
-//       table: "subjects"
-//     }
-//   ]
-// )
-
-
-const updateOne = async (
-  db,
-  table,
-  where = {},
-  data = {},
-  populate = []
-) => {
-  // Validate table
-  if (!table || typeof table !== "string") {
-    throw new Error("Table name is required.")
-  }
-
-  // Validate where
-  if (!where || typeof where !== "object" || Array.isArray(where)) {
-    throw new Error("Where must be an object.")
-  }
-
-  // Validate data
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    throw new Error("Data must be an object.")
-  }
-
-  const whereKeys = Object.keys(where)
-  const dataKeys = Object.keys(data)
-
-  if (!whereKeys.length) {
-    throw new Error("No search conditions provided.")
-  }
-
-  if (!dataKeys.length) {
-    throw new Error("No update data provided.")
-  }
-
-  const setClause = dataKeys
-    .map(key => `${key} = ?`)
-    .join(", ")
-
-  const whereClause = whereKeys
-    .map(key => `${key} = ?`)
-    .join(" AND ")
-
-  const sql = `
-    UPDATE ${table}
-    SET ${setClause}
-    WHERE ${whereClause}
-  `
-
-  const values = [
-    ...Object.values(data),
-    ...Object.values(where)
-  ]
-
-  // Execute update
-  await db.run(sql, values)
-
-  // Get updated record
-  const selectSql = `
-    SELECT *
-    FROM ${table}
-    WHERE ${whereClause}
-    LIMIT 1
-  `
-
-  const result = await db.get(
-    selectSql,
-    Object.values(where)
-  )
-
-  if (!result) return null
-
-  // Populate relations
-  for (const item of populate) {
-    const {
-      path,
-      table,
-      foreignKey = "id"
-    } = item
-
-    if (result[path] == null) continue
-
-    result[path] = await db.get(
-      `SELECT * FROM ${table} WHERE ${foreignKey} = ? LIMIT 1`,
-      [result[path]]
+    console.log(
+      "✅ Application lessons.db opened"
     )
   }
 
-  return result
+  return lessonsDb
 }
-/// usege 
+
+/**
+ * ============================================================
+ * DATABASE 2 — BUNDLED DATABASE
+ *
+ * This is ONLY used during initialization/import.
+ * getSidebar() will NEVER use this.
+ * ============================================================
+ */
+
+async function getBundledLessonsDB(): Promise<LessonsDatabase> {
+
+  console.log(
+    "📦 Resolving bundled lessons.db..."
+  )
+
+  const dbPath =
+    await resolveResource(
+      "resources/lessons.db"
+    )
+
+  console.log(
+    "📍 Bundled database:",
+    dbPath
+  )
+
+  const db =
+    await Database.load(
+      `sqlite:${dbPath}`
+    )
+
+  console.log(
+    "✅ Bundled lessons.db opened"
+  )
+
+  return db
+}
+
+/**
+ * ============================================================
+ * CREATE TABLES
+ * ============================================================
+ */
+
+async function ensureTables(): Promise<void> {
+
+  const db = await getLessonsDB()
+
+  console.log(
+    "🛠️ Creating lessons.db tables..."
+  )
+
+  /**
+   * SUBJECTS
+   */
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS subjects (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      icon TEXT
+    )
+  `)
+
+  /**
+   * TOPICS
+   */
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS topics (
+      id TEXT PRIMARY KEY,
+      subject_id TEXT NOT NULL,
+      topic_number TEXT,
+      title TEXT NOT NULL,
+      order_index INTEGER NOT NULL
+    )
+  `)
+
+  /**
+   * LESSONS
+   */
+  await db.execute(`
+    CREATE TABLE IF NOT EXISTS lessons (
+      id TEXT PRIMARY KEY,
+      topic_id TEXT NOT NULL,
+      subject_id TEXT NOT NULL,
+      topic_number TEXT,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      summary TEXT,
+      blocks TEXT,
+      search_text TEXT,
+      order_index INTEGER NOT NULL
+    )
+  `)
+
+  /**
+   * INDEXES
+   */
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_topics_subject_id
+    ON topics(subject_id)
+  `)
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_lessons_topic_id
+    ON lessons(topic_id)
+  `)
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_lessons_subject_id
+    ON lessons(subject_id)
+  `)
+
+  await db.execute(`
+    CREATE INDEX IF NOT EXISTS idx_lessons_order_index
+    ON lessons(order_index)
+  `)
+
+  console.log(
+    "✅ lessons.db tables ready"
+  )
+}
+
+/**
+ * ============================================================
+ * CLEAR ALL DATA
+ *
+ * TESTING ONLY
+ *
+ * This does NOT delete the tables.
+ * It only removes their rows.
+ * ============================================================
+ */
+
+export async function clearLessonsDatabase(): Promise<void> {
+
+  const db = await getLessonsDB()
+
+  console.log(
+    "🧹 Clearing lessons database..."
+  )
+
+  await db.execute("BEGIN TRANSACTION")
+
+  try {
+
+    /**
+     * Delete children first.
+     */
+    await db.execute(
+      "DELETE FROM lessons"
+    )
+
+    await db.execute(
+      "DELETE FROM topics"
+    )
+
+    await db.execute(
+      "DELETE FROM subjects"
+    )
+
+    await db.execute(
+      "COMMIT"
+    )
+
+    console.log(
+      "✅ subjects table empty"
+    )
+
+    console.log(
+      "✅ topics table empty"
+    )
+
+    console.log(
+      "✅ lessons table empty"
+    )
+
+    console.log(
+      "🎉 Lessons database completely empty"
+    )
+
+  } catch (error) {
+
+    await db.execute(
+      "ROLLBACK"
+    )
+
+    console.error(
+      "❌ Failed to clear lessons database:",
+      error
+    )
+
+    throw error
+  }
+}
+
+/**
+ * ============================================================
+ * LOAD BUNDLED DATA
+ *
+ * DATABASE 2 → DATABASE 1
+ *
+ * This happens ONLY during initialization.
+ * ============================================================
+ */
+
+async function loadBundledLessons(): Promise<void> {
+
+  const db = await getLessonsDB()
+  const bundledDb = await getBundledLessonsDB()
+
+  console.log(
+    "📥 Loading bundled curriculum..."
+  )
+
+  /**
+   * ----------------------------------------------------------
+   * LOAD SUBJECTS
+   * ----------------------------------------------------------
+   */
+
+  const subjects =
+    await bundledDb.select<{
+      id: string
+      name: string
+      icon: string | null
+    }[]>(`
+      SELECT
+        id,
+        name,
+        icon
+      FROM subjects
+      ORDER BY id
+    `)
+
+  /**
+   * ----------------------------------------------------------
+   * LOAD TOPICS
+   * ----------------------------------------------------------
+   */
+
+  const topics =
+    await bundledDb.select<{
+      id: string
+      subject_id: string
+      topic_number: string | null
+      title: string
+      order_index: number
+    }[]>(`
+      SELECT
+        id,
+        subject_id,
+        topic_number,
+        title,
+        order_index
+      FROM topics
+      ORDER BY subject_id, order_index
+    `)
+
+  /**
+   * ----------------------------------------------------------
+   * LOAD LESSONS
+   * ----------------------------------------------------------
+   */
+
+  const lessons =
+    await bundledDb.select<{
+      id: string
+      topic_id: string
+      subject_id: string
+      topic_number: string | null
+      slug: string
+      title: string
+      summary: string | null
+      blocks: string | null
+      search_text: string | null
+      order_index: number
+    }[]>(`
+      SELECT
+        id,
+        topic_id,
+        subject_id,
+        topic_number,
+        slug,
+        title,
+        summary,
+        blocks,
+        search_text,
+        order_index
+      FROM lessons
+      ORDER BY topic_id, order_index
+    `)
+
+  console.log(
+    "📦 Bundled subjects:",
+    subjects.length
+  )
+
+  console.log(
+    "📦 Bundled topics:",
+    topics.length
+  )
+
+  console.log(
+    "📦 Bundled lessons:",
+    lessons.length
+  )
+
+  /**
+   * ==========================================================
+   * INSERT EVERYTHING INTO APPLICATION DATABASE
+   * ==========================================================
+   */
+
+  await db.execute(
+    "BEGIN TRANSACTION"
+  )
+
+  try {
+
+    /**
+     * SUBJECTS
+     */
+
+    for (const subject of subjects) {
+
+      await db.execute(
+        `
+        INSERT OR REPLACE INTO subjects (
+          id,
+          name,
+          icon
+        )
+        VALUES (?, ?, ?)
+        `,
+        [
+          subject.id,
+          subject.name,
+          subject.icon
+        ]
+      )
+    }
+
+    console.log(
+      `✅ Imported ${subjects.length} subjects`
+    )
+
+    /**
+     * TOPICS
+     */
+
+    for (const topic of topics) {
+
+      await db.execute(
+        `
+        INSERT OR REPLACE INTO topics (
+          id,
+          subject_id,
+          topic_number,
+          title,
+          order_index
+        )
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          topic.id,
+          topic.subject_id,
+          topic.topic_number,
+          topic.title,
+          topic.order_index
+        ]
+      )
+    }
+
+    console.log(
+      `✅ Imported ${topics.length} topics`
+    )
+
+    /**
+     * LESSONS
+     */
+
+    for (const lesson of lessons) {
+
+      await db.execute(
+        `
+        INSERT OR REPLACE INTO lessons (
+          id,
+          topic_id,
+          subject_id,
+          topic_number,
+          slug,
+          title,
+          summary,
+          blocks,
+          search_text,
+          order_index
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          lesson.id,
+          lesson.topic_id,
+          lesson.subject_id,
+          lesson.topic_number,
+          lesson.slug,
+          lesson.title,
+          lesson.summary,
+          lesson.blocks,
+          lesson.search_text,
+          lesson.order_index
+        ]
+      )
+    }
+
+    console.log(
+      `✅ Imported ${lessons.length} lessons`
+    )
+
+    await db.execute(
+      "COMMIT"
+    )
+
+    console.log(
+      "🎉 Bundled curriculum imported successfully"
+    )
+
+  } catch (error) {
+
+    await db.execute(
+      "ROLLBACK"
+    )
+
+    console.error(
+      "❌ Curriculum import failed:",
+      error
+    )
+
+    throw error
+  }
+}
+
+/**
+ * ============================================================
+ * INITIALIZE DATABASE
+ * ============================================================
+ *
+ * EVERYTHING THAT SHOULD HAPPEN ON STARTUP GOES HERE.
+ *
+ * IMPORTANT:
+ *
+ * Change TEST_MODE to false when you no longer want
+ * the database cleared/imported every startup.
+ * ============================================================
+ */
+
+const TEST_MODE = true
+
+export function initializeLessonsDatabase(): Promise<void> {
+
+  if (!initializationPromise) {
+
+    initializationPromise = (async () => {
+
+      console.log(
+        "🚀 Initializing lessons database..."
+      )
+
+      /**
+       * 1. Create tables
+       */
+      await ensureTables()
+
+      /**
+       * 2. TESTING
+       *
+       * Empty local database first.
+       */
+      if (TEST_MODE) {
+
+        console.log(
+          "🧪 TEST MODE ENABLED"
+        )
+
+        await clearLessonsDatabase()
+
+        /**
+         * Optional:
+         * Load bundled data after clearing.
+         *
+         * If you want the database to remain EMPTY
+         * for testing importer, comment this out.
+         */
+        // await loadBundledLessons()
+      }
+
+      /**
+       * 3. Normal startup import
+       *
+       * Uncomment when you want bundled data
+       * automatically loaded.
+       */
+
+      // await loadBundledLessons()
+
+      console.log(
+        "🎓 lessons.db initialization complete"
+      )
+
+    })().catch((error) => {
+
+      console.error(
+        "❌ lessons.db initialization failed:",
+        error
+      )
+
+      initializationPromise = null
+
+      throw error
+    })
+  }
+
+  return initializationPromise
+}
+
+/**
+ * ============================================================
+ * DATABASE READY
+ * ============================================================
+ */
+
+async function readyLessonsDB(): Promise<LessonsDatabase> {
+
+  await initializeLessonsDatabase()
+
+  return getLessonsDB()
+}
+
+/**
+ * ============================================================
+ * GET RAW SUBJECT COUNT
+ * ============================================================
+ */
+
+export async function getRawSubjectsCount(): Promise<number> {
+
+  const db =
+    await readyLessonsDB()
+
+  const rows =
+    await db.select<{ n: number }[]>(
+      `
+      SELECT COUNT(*) AS n
+      FROM subjects
+      `
+    )
+
+  return Number(
+    rows?.[0]?.n ?? 0
+  )
+}
+
+/**
+ * ============================================================
+ * GET SIDEBAR
+ *
+ * IMPORTANT:
+ * ONLY READ DATA.
+ *
+ * NO DATABASE 2.
+ * NO IMPORT.
+ * NO COPY.
+ * NO INITIALIZATION LOGIC.
+ * ============================================================
+ */
+
+export async function getSidebar() {
+
+  try {
+
+    const db =
+      await readyLessonsDB()
+
+    console.log(
+      "📦 Loading sidebar..."
+    )
+
+    /**
+     * ========================================================
+     * GET SUBJECTS
+     * ========================================================
+     */
+
+    const subjects =
+      await db.select<{
+        id: string | number
+        name: string
+        icon: string | null
+      }[]>(`
+        SELECT
+          id,
+          name,
+          icon
+        FROM subjects
+        ORDER BY id
+      `)
+
+    /**
+     * ========================================================
+     * GET TOPICS
+     * ========================================================
+     */
+
+    const topics =
+      await db.select<{
+        id: string
+        subject_id: string
+        topic_number: string | null
+        title: string
+        order_index: number
+      }[]>(`
+        SELECT
+          id,
+          subject_id,
+          topic_number,
+          title,
+          order_index
+        FROM topics
+        ORDER BY subject_id, order_index
+      `)
+
+    /**
+     * ========================================================
+     * GET LESSONS
+     * ========================================================
+     */
+
+    const lessons =
+      await db.select<{
+        id: string
+        topic_id: string
+        subject_id: string
+        topic_number: string | null
+        slug: string
+        title: string
+        summary: string | null
+        blocks: string | null
+        search_text: string | null
+        order_index: number
+      }[]>(`
+        SELECT
+          id,
+          topic_id,
+          subject_id,
+          topic_number,
+          slug,
+          title,
+          summary,
+          blocks,
+          search_text,
+          order_index
+        FROM lessons
+        ORDER BY topic_id, order_index
+      `)
+
+    console.log(
+      "📊 Sidebar data:",
+      {
+        subjects: subjects.length,
+        topics: topics.length,
+        lessons: lessons.length
+      }
+    )
+
+    /**
+     * ========================================================
+     * BUILD TREE
+     * ========================================================
+     */
+
+    const result =
+      subjects.map((subject) => {
+
+        const subjectId =
+          String(subject.id).trim()
+
+        const subjectTopics =
+          topics
+            .filter((topic) =>
+              subjectId ===
+              String(topic.subject_id).trim()
+            )
+            .map((topic) => {
+
+              const topicId =
+                String(topic.id).trim()
+
+              const topicLessons =
+                lessons
+                  .filter((lesson) =>
+                    topicId ===
+                    String(lesson.topic_id).trim()
+                  )
+                  .map((lesson) => ({
+                    id: lesson.id,
+                    topic_id: lesson.topic_id,
+                    subject_id: lesson.subject_id,
+                    topic_number: lesson.topic_number,
+                    slug: lesson.slug,
+                    title: lesson.title,
+                    summary: lesson.summary,
+                    blocks: lesson.blocks,
+                    search_text: lesson.search_text,
+                    order_index: lesson.order_index
+                  }))
+
+              return {
+                id: topic.id,
+                subject_id: topic.subject_id,
+                topic_number: topic.topic_number,
+                title: topic.title,
+                order_index: topic.order_index,
+                lessons: topicLessons
+              }
+            })
+
+        return {
+          id: subject.id,
+          name: subject.name,
+          icon: subject.icon,
+          topics: subjectTopics
+        }
+      })
+
+    console.log(
+      "🌳 Sidebar ready:",
+      result.length,
+      "subjects"
+    )
+
+    return result
+
+  } catch (error) {
+
+    console.error(
+      "❌ getSidebar failed:",
+      error
+    )
+
+    throw error
+  }
+}
