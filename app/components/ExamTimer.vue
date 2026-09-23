@@ -15,10 +15,10 @@
     >
       <Icon
         name="lucide:clock-3"
-        class="w-5 text-2xl h-5"
+        class="w-5 text-lg sm:text-2xl h-5"
       />
 
-      <span class="font-mono font-medium text-lg">
+      <span class="font-mono font- text-sm sm:text-lg">
         {{ formattedTime }}
       </span>
     </div>

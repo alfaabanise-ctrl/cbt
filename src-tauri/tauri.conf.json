@@ -1,31 +1,62 @@
+
+
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "cbt",
   "version": "0.1.0",
- "identifier": "com.virex.cbt",
+  "identifier": "com.virex.cbt",
+
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3000",
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build"
   },
+
   "app": {
     "windows": [
       {
-        "title": "cbt",
-        "width": 800,
-        "height": 600,
+        "label": "splashscreen",
+        "title": "ExamTips",
+        "url": "splashscreen.html",
+
+        "width": 850,
+        "height": 480,
+
+        "resizable": false,
+        "fullscreen": false,
+        "decorations": false,
+        "center": true,
+
+        "visible": true,
+        "alwaysOnTop": true,
+        "skipTaskbar": true
+      },
+      {
+        "label": "main",
+        "title": "CBT - ExamTips",
+        "width": 200,
+        "height": 444,
+        "minWidth": 320,
+        "minHeight": 568,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true,
+       
+
+        "visible": false
       }
     ],
+
     "security": {
       "csp": null
     }
   },
+
   "bundle": {
     "active": true,
     "targets": "all",
+
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -33,7 +64,13 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["resources/dictionary.db",  "resources/questions.db","resources/lessons.db"],
+
+    "resources": [
+      "resources/dictionary.db",
+      "resources/questions.db",
+      "resources/lessons.db"
+    ],
+
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

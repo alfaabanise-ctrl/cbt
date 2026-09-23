@@ -1,20 +1,21 @@
 <template>
-  <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-
-
+  <div
+    class="w-full overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm sm:rounded-2xl"
+  >
     <!-- Header -->
     <button
-      class="flex w-full items-center justify-between bg-stone-100 px-6 py-3"
+      type="button"
+      class="flex w-full items-center justify-between bg-stone-100 px-3 py-2.5 sm:px-6 sm:py-3"
       @click="open = !open"
     >
-      <div class="flex items-center gap-3">
+      <div class="flex min-w-0 items-center gap-2 sm:gap-3">
         <Icon
           :name="open ? 'lucide:chevron-down' : 'lucide:chevron-right'"
-          class="text-xl"
+          class="h-4 w-4 shrink-0 text-slate-700 sm:h-5 sm:w-5"
         />
 
-        <h2 class="text-lg font-bold">
-         Exam Details
+        <h2 class="truncate text-sm font-bold text-slate-800 sm:text-lg">
+          Exam Details
         </h2>
       </div>
     </button>
@@ -22,298 +23,292 @@
     <Transition name="fade">
       <div
         v-show="open"
-        class="grid grid-cols-1 gap-4 p-4 "
+        class="w-full min-w-0 space-y-6 p-3 sm:space-y-10 sm:p-5"
       >
-       <div class="flex justify-between items-center mb-10">
+        <!-- Controls -->
+        <div
+          class="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div class="flex w-full items-center gap-2 sm:w-auto">
+            <label
+              class="shrink-0 rounded bg-green-800 px-2 py-1.5 text-xs font-semibold text-white sm:px-4 sm:text-sm"
+            >
+              Format
+            </label>
 
-        <div class="flex gap-2 items-center">
-
-            <div class="bg-green-800 rounded-sm text-white px-4 py-1">
-            Format
-            </div>
-
-            <select class="border rounded-sm px-2 py-1 w-64">
-            <option>Slip</option>
+            <select
+              class="min-w-0 flex-1 rounded border border-slate-300 bg-white px-2 py-1.5 text-xs outline-none focus:border-blue-500 sm:w-64 sm:flex-none sm:text-sm"
+            >
+              <option>Slip</option>
             </select>
-
-            </div>
-
+          </div>
 
           <button
-                class="bg-blue-600 text-white px-6 py-1 rounded-sm"
-            >
-                Print
-            </button>
-        </div>
-        <!-- Profile Section -->
-            <div class="flex items-center">
-
-      <!-- Profile -->
-
-            <div class="w-1/4">
-                <Icon
-                name="lucide:user-round"
-                class="text-green-600 text-[60px]"
-                />
-            </div>
-
-            <!-- Title -->
-
-            <div class="flex-1 text-center">
-                <h1
-                class="font-bold text-[15px]"
-                style="font-family: Times New Roman"
-                >
-                UTME
-                </h1>
-
-                <h2
-                class="font-bold text-[15px]"
-                style="font-family: n"
-                >
-                Result Slip
-                </h2>
-            </div>
-
-            <!-- Printed Date -->
-
-            <div
-                class="w-1/4 text-right font-bold"
-                style="font-family: Tn"
-            >
-                Date Printed:
-             
-            </div>
- 
+            type="button"
+            class="w-full rounded bg-blue-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700 sm:w-auto sm:px-6 sm:text-sm"
+          >
+            <Icon name="lucide:printer" class="mr-1 inline h-3.5 w-3.5" />
+            Print
+          </button>
         </div>
 
-    <hr class="my-">
-        
+        <!-- Slip Heading -->
+        <div
+          class="flex min-w-0 items-center gap-2 sm:gap-4"
+          style="font-family: 'Times New Roman', serif"
+        >
+          <!-- Profile Icon -->
+          <div class="flex w-1/5 shrink-0 justify-start">
+            <Icon
+              name="lucide:user-round"
+              class="h-10 w-10 text-green-600 sm:h-16 sm:w-16"
+            />
+          </div>
+
+          <!-- Title -->
+          <div class="min-w-0 flex-1 text-center">
+            <h1 class="text-sm font-bold sm:text-base">
+              UTME
+            </h1>
+
+            <h2 class="text-sm font-bold sm:text-base">
+              Result Slip
+            </h2>
+          </div>
+
+          <!-- Date -->
+          <div
+            class="w-1/4 shrink-0 text-right text-[9px] font-bold leading-tight sm:text-sm"
+          >
+            <span class="block">Date Printed:</span>
+            <span class="font-normal">
+              {{ formatDate(new Date()) }}
+            </span>
+          </div>
+        </div>
+
+        <hr class="border-slate-200" />
 
         <!-- Examination Details -->
+        <section
+          class="min-w-0 text-xs sm:text-base"
+          style="font-family: 'Times New Roman', serif"
+        >
+          <h2 class="mb-3 text-base font-bold sm:mb-4 sm:text-xl">
+            Examination Details
+          </h2>
 
-    <div
-      class="text-[16px]"
-      style="font-family: Times New Roman"
-    >
+          <div class="space-y-2 sm:space-y-3">
+            <div class="flex min-w-0 gap-2">
+              <div class="w-24 shrink-0 font-semibold sm:w-40">
+                Username:
+              </div>
 
-      <h2 class="font-bold text-[20px] mb-2">
-        Examination Details
-      </h2>
+              <div class="min-w-0 break-words">
+                {{ appState.currentsuser || "N/A" }}
+              </div>
+            </div>
 
-      <div class="space-y-">
+            <div class="flex min-w-0 gap-2">
+              <div class="w-24 shrink-0 font-semibold sm:w-40">
+                Subject(s):
+              </div>
 
-        <div class="flex">
-          <div class="w-40">
-            Username:
+              <div class="min-w-0 break-words">
+                {{
+                  examDetails?.subjects
+                    ?.map((subject) => subject.name)
+                    .join(", ") || "N/A"
+                }}
+              </div>
+            </div>
+
+            <div class="flex min-w-0 gap-2">
+              <div class="w-24 shrink-0 font-semibold sm:w-40">
+                Exam Date:
+              </div>
+
+              <div class="min-w-0 break-words">
+                {{ formatDate(startingDate) }}
+              </div>
+            </div>
           </div>
-
-          <div>
-            {{ appState.currentsuser }}
-          </div>
-        </div>
-
-        <div class="flex">
-          <div class="w-40">
-            Subject(s):
-          </div>
-
-          <div>
-           {{ examDetails.subjects.map(subject => subject.name).join(", ") }}
-          </div>
-        </div>
-
-        <div class="flex">
-          <div class="w-40">
-            Exam Date:
-          </div>
-
-          <div>
-             {{formatDate(startingDate)}}
-          </div>
-        </div>
-
-      </div>
-
-    </div>
-
+        </section>
 
         <!-- Candidate Result -->
+        <section
+          class="min-w-0"
+          style="font-family: 'Times New Roman', serif"
+        >
+          <h2 class="mb-3 text-base font-bold sm:mb-4 sm:text-xl">
+            Candidate Result
+          </h2>
 
-    <div
-      class="mt-12"
-      style="font-family: Times New Roman"
-    >
+          <!-- Table Wrapper -->
+          <div class="w-full max-w-full overflow-x-auto">
+            <table class="w-full min-w-[440px] border-collapse text-xs sm:text-base">
+              <thead>
+                <tr class="border-b border-slate-300">
+                  <th class="whitespace-nowrap py-2 text-left text-sm sm:text-lg">
+                    Subject
+                  </th>
 
-      <h2 class="font-bold text-[20px] mb-4">
-        Candidate Result
-      </h2>
+                  <th class="whitespace-nowrap px-2 py-2 text-left text-sm sm:text-lg">
+                    Score
+                  </th>
 
-      <table class="w-[700px]">
+                  <th class="whitespace-nowrap py-2 text-left text-sm sm:text-lg">
+                    Time Spent
+                  </th>
+                </tr>
+              </thead>
 
-        <thead>
+              <tbody>
+                <tr
+                  v-for="subject in examDetails?.subjects || []"
+                  :key="subject.name"
+                  class="border-b border-slate-100"
+                >
+                  <td class="max-w-[160px] break-words py-2">
+                    {{ subject.name }}
+                  </td>
 
-          <tr class="border-b">
+                  <td class="px-2 py-2">
+                    {{ Math.round(subject.score || 0) }}
+                  </td>
 
-            <th class="text-left text-[18px]">
-              Subject
-            </th>
+                  <td class="whitespace-nowrap py-2">
+                    {{ formatTotalTime(subject.questions || []) }}
+                  </td>
+                </tr>
+              </tbody>
 
-            <th class="text-left text-[18px]">
-              Score
-            </th>
+              <tfoot>
+                <tr class="border-t border-slate-300 font-semibold">
+                  <td class="break-words pt-3">
+                    Aggregate
+                  </td>
 
-            <th class="text-left text-[18px]">
-              Time Spent
-            </th>
+                  <td class="px-2 pt-3">
+                    <span class="block text-[10px] sm:inline sm:text-base">
+                      Total:
+                    </span>
 
-          </tr>
+                    {{ Math.round(examDetails?.aggregate || 0) }}
+                    /
+                    {{ Math.round(examDetails?.maxAggregate || 0) }}
+                  </td>
 
-        </thead>
+                  <td class="whitespace-nowrap pt-3">
+                    <span class="block text-[10px] sm:inline sm:text-base">
+                      Total:
+                    </span>
 
-        <tbody>
-
-            
-           
-          <tr
-             v-for="subject  in examDetails.subjects"
-            :key="subject.name"
-          >
-         
-            <td class="py-1">
-              {{ subject.name }}
-            </td>
-
-            <td>
-              {{ Math.round(subject.score) }}
-            </td>
-
-            <td>
-                {{ formatTotalTime(subject.questions)}}
-            </td>
-          </tr>
-
-        </tbody>
-
-        <tfoot>
-
-          <tr class="border-t">
-
-            <td class="pt-2">
-              Aggregate
-            </td>
-
-            <td class="pt-2">
-              Total:
-             {{Math.round(examDetails.aggregate)}}/ {{ Math.round(examDetails.maxAggregate) }}
-            </td>
-
-            <td class="pt-2">
-              Total: {{ formatTotalTime(examDetails.subjects.flatMap(s => s.questions)) }}             
-            </td>
-
-          </tr>
-
-        </tfoot>
-
-      </table>
-
-    </div>
-
-
-        
+                    {{
+                      formatTotalTime(
+                        examDetails?.subjects?.flatMap(
+                          (subject) => subject.questions || []
+                        ) || []
+                      )
+                    }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </section>
       </div>
     </Transition>
-
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue"
-const appState = useAppState()
-const open = ref(true)
+import { ref } from "vue";
 
-defineProps({
+const appState = useAppState();
+
+const open = ref(true);
+
+const props = defineProps({
   title: {
     type: String,
-    default: "Summary"
+    default: "Summary",
   },
+
   examDetails: {
     type: Object,
-    default: null
+    default: () => ({
+      subjects: [],
+      aggregate: 0,
+      maxAggregate: 0,
+    }),
   },
-  startingDate:{
-    type:String,
-    default: '2sdfdfsdfs'
-  }
 
-})
+  startingDate: {
+    type: [String, Date],
+    default: null,
+  },
+});
 
 function formatTotalTime(questions = []) {
   const totalSeconds = questions.reduce(
-    (total, q) => total + (q.timeSpent || 0),
+    (total, question) => total + Number(question?.timeSpent || 0),
     0
-  )
+  );
 
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
 
   if (hours > 0) {
-    return `${hours} hr ${minutes} min ${seconds} sec`
+    return `${hours} hr ${minutes} min ${seconds} sec`;
   }
 
   if (minutes > 0) {
-    return `${minutes} min ${seconds} sec`
+    return `${minutes} min ${seconds} sec`;
   }
 
-  return `${seconds} sec`
+  return `${seconds} sec`;
 }
 
-function formatSeconds(totalSeconds) {
-  const hours = Math.floor(totalSeconds / 3600)
-  const minutes = Math.floor((totalSeconds % 3600) / 60)
-  const seconds = totalSeconds % 60
+function formatDate(dateString) {
+  if (!dateString) return "N/A";
 
-  if (hours > 0) {
-    return `${hours} hr ${minutes} min ${seconds} sec`
+  const date = new Date(dateString);
+
+  if (Number.isNaN(date.getTime())) {
+    return "N/A";
   }
 
-  if (minutes > 0) {
-    return `${minutes} min ${seconds} sec`
-  }
-
-  return `${seconds} sec`
+  return date.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 }
-
-const formatDate = (dateString) => {
-  return new Date(dateString)
-    .toLocaleString('en-US', {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    })
-}
-
-// const totalAggregate = computed(() => {
-//   return props.subjects.reduce((total, subject) => {
-//     const score = subject.total
-//       ? (subject.correct / subject.total) * 100
-//       : 0
-
-//     return total + score
-//   }, 0)
-// })
 </script>
 
 <style scoped>
 .fade-enter-active,
 .fade-leave-active {
-  transition: all .25s ease;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* Improve mobile table scrolling */
+table {
+  table-layout: auto;
+}
+
+/* Prevent long text from breaking the page */
+td,
+th {
+  overflow-wrap: anywhere;
 }
 </style>

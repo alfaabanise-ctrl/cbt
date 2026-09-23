@@ -1,203 +1,154 @@
 <template>
-
   <Teleport to="body">
 
     <!-- OVERLAY -->
-
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm"
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 backdrop-blur-sm sm:p-4"
     >
 
       <!-- MODAL -->
-
       <div
-        class="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-sm bg-white shadow-2xl"
+        class="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-md bg-white shadow-2xl"
       >
 
-        <!-- ================================= -->
         <!-- HEADER -->
-        <!-- ================================= -->
-
         <div
-          class="flex items-center justify-between bg-primary px-6 py-1 text-white"
+          class="flex shrink-0 items-center justify-between bg-primary px-3 py-1.5 text-white sm:px-4"
         >
-
-          <h2 class="text-sm font-semibold">
+          <h2 class="text-xs font-semibold sm:text-sm">
             Select Subject
           </h2>
-
-
-          <!-- CLOSE -->
 
           <button
             type="button"
             @click="closeModal"
-            class="flex h-10 w-10 items-center justify-center rounded-full transition hover:bg-white/20"
+            aria-label="Close"
+            class="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-white/15 sm:h-9 sm:w-9"
           >
-
             <Icon
               name="lucide:x"
-              class="  text-2xl font-semibold "
+              class="h-4 w-4 sm:h-5 sm:w-5"
             />
-
           </button>
-
         </div>
 
 
-        <!-- ================================= -->
         <!-- CONTENT -->
-        <!-- ================================= -->
-
         <div
-          class="flex-1 overflow-y-auto p-3"
+          class="min-h-0 flex-1 overflow-y-auto px-3 py-2.5 sm:px-4 sm:py-3"
         >
 
           <!-- SELECT ALL -->
-
           <label
-            class="mb-2 flex cursor-pointer items-center gap-3 border-b border-primary pb-2"
+            class="mb-2 flex cursor-pointer items-center gap-2 border-b border-slate-200 pb-2"
           >
-
             <input
               type="checkbox"
               :checked="allSelected"
               @change="toggleSelectAll"
-              class="h-4 w-4 cursor-pointer accent-blue-600"
+              class="h-3.5 w-3.5 cursor-pointer accent-blue-600 sm:h-4 sm:w-4"
             />
 
             <span
-              class="text-[15px] font-semibold text-slate-800"
+              class="text-xs font-semibold text-slate-700 sm:text-sm"
             >
               Select All
             </span>
-
           </label>
 
 
-          <!-- ================================= -->
           <!-- SUBJECT LIST -->
-          <!-- ================================= -->
-
           <div
-            class="grid grid-cols-1 gap- sm:grid-cols-2"
+            class="grid grid-cols-1 gap-1 sm:grid-cols-2 sm:gap-1.5"
           >
 
             <label
               v-for="subject in SUBJECTS"
-              :key="subject"
-              class="group flex cursor-pointer items-center gap-3 rounded-sm p-2 transition hover:bg-green-50"
+              :key="subject.id"
+              class="group flex min-w-0 cursor-pointer items-center gap-2 rounded-md px-1.5 py-1.5 transition hover:bg-slate-50 sm:px-2 sm:py-2"
             >
 
               <!-- CHECKBOX -->
-
               <input
                 type="checkbox"
                 :checked="isSelected(subject)"
                 @change="toggleSubject(subject)"
-                class="h-4 w-4 cursor-pointer bg-primary accen-green-600"
+                class="h-3.5 w-3.5 shrink-0 cursor-pointer accent-green-600 sm:h-4 sm:w-4"
               />
 
 
               <!-- ICON -->
-
               <div
                 :class="[
-                  'flex h-8 w-8 shrink-0 items-center justify-center rounded-sm',
+                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-md sm:h-8 sm:w-8',
                   getSubjectColor(subject).bg
                 ]"
               >
-
                 <Icon
                   :name="getSubjectIcon(subject)"
                   :class="[
-                    'h-4 w-4',
+                    'h-3.5 w-3.5 sm:h-4 sm:w-4',
                     getSubjectColor(subject).text
                   ]"
                 />
-
               </div>
 
 
               <!-- SUBJECT NAME -->
-
               <span
-                class="text-base font-medium text-slate-700"
+                class="min-w-0 truncate text-xs font-medium text-slate-700 sm:text-sm"
               >
-
                 {{ formatSubjectName(subject) }}
-
               </span>
 
             </label>
 
           </div>
-
         </div>
 
 
-        <!-- ================================= -->
         <!-- FOOTER -->
-        <!-- ================================= -->
-
         <div
-          class="flex items-center justify-between border-t border-slate-200 bg-primary px-6 py-4"
+          class="flex shrink-0 items-center justify-between border-t border-slate-200 bg-primary px-3 py-2 sm:px-4 sm:py-2.5"
         >
 
           <!-- SELECTED COUNT -->
-
           <span
-            class="text-sm font-medium text-white"
+            class="text-[11px] font-medium text-white sm:text-xs"
           >
-
-            {{ selectedSubjects.length }}
-            selected
-
+            {{ selectedSubjects.length }} selected
           </span>
 
 
           <!-- BUTTONS -->
-
-          <div
-            class="flex gap-3"
-          >
+          <div class="flex gap-1.5 sm:gap-2">
 
             <!-- CANCEL -->
-
             <button
               type="button"
               @click="closeModal"
-              class="rounded-sm bg-white px-5 py-1 font-semibold text-slate-700 shadow transition hover:bg-slate-100"
+              class="rounded-md bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 sm:px-4 sm:py-1.5"
             >
-
               Cancel
-
             </button>
 
 
             <!-- OKAY -->
-
             <button
               type="button"
               @click="confirmSubjects"
-              class="rounded-sm bg-blue-600 px-5 py-1 font-semibold text-white shadow transition hover:bg-blue-700"
+              class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-blue-700 sm:px-4 sm:py-1.5"
             >
-
               Okay
-
             </button>
 
           </div>
-
         </div>
 
       </div>
-
     </div>
-
   </Teleport>
-
 </template>
 
 
@@ -210,43 +161,16 @@ import {
 } from 'vue'
 
 
-/*
-|--------------------------------------------------------------------------
-| PROPS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   PROPS
+========================================================= */
 
 const props = defineProps({
-
-  /*
-   * Controls modal open / close
-   *
-   * Parent:
-   *
-   * <SelectSubject
-   *   v-model="showSubjectModal"
-   * />
-   */
 
   modelValue: {
     type: Boolean,
     default: false
   },
-
-
-  /*
-   * Selected subjects from parent
-   *
-   * Example:
-   *
-   * [
-   *   {
-   *     id: 'biology',
-   *     name: 'Biology',
-   *     icon: 'lucide:dna'
-   *   }
-   * ]
-   */
 
   modelSubjects: {
     type: Array,
@@ -256,58 +180,27 @@ const props = defineProps({
 })
 
 
-/*
-|--------------------------------------------------------------------------
-| EMITS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   EMITS
+========================================================= */
 
 const emit = defineEmits([
-
-  /*
-   * v-model
-   */
-
   'update:modelValue',
-
-
-  /*
-   * Selected subjects
-   */
-
   'update:modelSubjects',
-
-
-  /*
-   * User clicked confirm
-   */
-
   'confirm'
-
 ])
 
 
-/*
-|--------------------------------------------------------------------------
-| ALL SUBJECTS
-|--------------------------------------------------------------------------
-|
-| Every subject has the same structure:
-|
-| id
-| name
-| icon
-|
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SUBJECTS
+========================================================= */
 
 const SUBJECTS = [
 
   {
     id: 'accounting',
     name: 'Accounting',
-    icon: 'lucide:calculator',
-     
+    icon: 'lucide:calculator'
   },
 
   {
@@ -451,84 +344,45 @@ const SUBJECTS = [
 ]
 
 
-/*
-|--------------------------------------------------------------------------
-| LOCAL SELECTED SUBJECTS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   LOCAL STATE
+========================================================= */
 
 const selectedSubjects = ref([])
 
 
-/*
-|--------------------------------------------------------------------------
-| COPY PARENT DATA INTO LOCAL DATA
-|--------------------------------------------------------------------------
-|
-| This handles both:
-|
-| 1. Parent sends objects
-|
-| 2. Parent accidentally sends string IDs
-|
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SYNC PARENT DATA
+========================================================= */
 
 watch(
-
   () => props.modelSubjects,
 
   (value) => {
 
     if (!Array.isArray(value)) {
-
       selectedSubjects.value = []
-
       return
-
     }
 
-
     selectedSubjects.value = value
-
       .map((subject) => {
 
-        /*
-         * If parent sends:
-         *
-         * "biology"
-         *
-         * Find the full subject object.
-         */
-
         if (typeof subject === 'string') {
-
           return SUBJECTS.find(
             item => item.id === subject
           )
-
         }
-
-
-        /*
-         * If parent already sends
-         * a complete object
-         */
 
         if (
           subject &&
           typeof subject === 'object'
         ) {
-
           return subject
-
         }
 
-
         return null
-
       })
-
       .filter(Boolean)
 
   },
@@ -537,141 +391,86 @@ watch(
     immediate: true,
     deep: true
   }
-
 )
 
 
-/*
-|--------------------------------------------------------------------------
-| CHECK IF ALL SUBJECTS ARE SELECTED
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   ALL SELECTED
+========================================================= */
 
 const allSelected = computed(() => {
 
   return (
-
     SUBJECTS.length > 0 &&
-
-    selectedSubjects.value.length ===
-    SUBJECTS.length
-
+    selectedSubjects.value.length === SUBJECTS.length
   )
 
 })
 
 
-/*
-|--------------------------------------------------------------------------
-| CHECK IF A SUBJECT IS SELECTED
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CHECK SELECTED
+========================================================= */
 
 const isSelected = (subject) => {
 
   return selectedSubjects.value.some(
-
     item => item.id === subject.id
-
   )
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| SELECT / UNSELECT SUBJECT
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   TOGGLE SUBJECT
+========================================================= */
 
 const toggleSubject = (subject) => {
 
-  /*
-   * Check if already selected
-   */
-
-  const index = selectedSubjects.value.findIndex(
-
-    item => item.id === subject.id
-
-  )
-
-
-  /*
-   * If selected
-   * remove it
-   */
+  const index =
+    selectedSubjects.value.findIndex(
+      item => item.id === subject.id
+    )
 
   if (index !== -1) {
 
-    selectedSubjects.value.splice(
-      index,
-      1
-    )
+    selectedSubjects.value.splice(index, 1)
 
     return
-
   }
 
-
-  /*
-   * If not selected
-   * add it
-   */
-
   selectedSubjects.value.push({
-
     id: subject.id,
-
     name: subject.name,
-
     icon: subject.icon
-
   })
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| SELECT / UNSELECT ALL
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   SELECT ALL
+========================================================= */
 
 const toggleSelectAll = () => {
-
-  /*
-   * If everything is selected
-   * remove everything
-   */
 
   if (allSelected.value) {
 
     selectedSubjects.value = []
 
     return
-
   }
 
-
-  /*
-   * Otherwise select everything
-   */
-
   selectedSubjects.value = [
-
     ...SUBJECTS
-
   ]
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| CLOSE MODAL
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CLOSE
+========================================================= */
 
 const closeModal = () => {
 
@@ -683,158 +482,79 @@ const closeModal = () => {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| CONFIRM SELECTED SUBJECTS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   CONFIRM
+========================================================= */
 
 const confirmSubjects = () => {
 
-  /*
-   * Create a clean copy
-   */
-
   const subjectsToSend =
-
     selectedSubjects.value.map(
-
       subject => ({
-
-        id:
-          subject.id,
-
-        name:
-          subject.name,
-
-        icon:
-          subject.icon
-
+        id: subject.id,
+        name: subject.name,
+        icon: subject.icon
       })
-
     )
 
-
-  /*
-   * Send selected subjects
-   * to parent using v-model
-   */
-
   emit(
-
     'update:modelSubjects',
-
     subjectsToSend
-
   )
 
-
-  /*
-   * Also send confirm event
-   */
-
   emit(
-
     'confirm',
-
     subjectsToSend
-
   )
 
-
-  /*
-   * Close modal
-   */
-
   emit(
-
     'update:modelValue',
-
     false
-
   )
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| FORMAT SUBJECT NAME
-|--------------------------------------------------------------------------
-|
-| This function is useful if you ever have
-| a subject ID and want to display it.
-|
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   FORMAT NAME
+========================================================= */
 
 const formatSubjectName = (subject) => {
-
-  /*
-   * If subject is an object
-   */
 
   if (
     subject &&
     typeof subject === 'object'
   ) {
-
     return subject.name || ''
-
   }
-
-
-  /*
-   * If subject is a string
-   */
 
   if (
     typeof subject !== 'string'
   ) {
-
     return ''
-
   }
 
-
   return subject
-
-    .replace(
-      /-/g,
-      ' '
-    )
-
+    .replace(/-/g, ' ')
     .replace(
       /\b\w/g,
-      char =>
-        char.toUpperCase()
+      char => char.toUpperCase()
     )
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| SUBJECT COLORS
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   COLORS
+========================================================= */
 
 const subjectColors = {
 
-  accounting:
-    ['bg-blue-100', 'text-blue-600'],
-
-  agriculture:
-    ['bg-green-100', 'text-green-600'],
-
-  arabic:
-    ['bg-orange-100', 'text-orange-600'],
-
-  biology:
-    ['bg-emerald-100', 'text-emerald-600'],
-
-  chemistry:
-    ['bg-purple-100', 'text-purple-600'],
+  accounting: ['bg-blue-100', 'text-blue-600'],
+  agriculture: ['bg-green-100', 'text-green-600'],
+  arabic: ['bg-orange-100', 'text-orange-600'],
+  biology: ['bg-emerald-100', 'text-emerald-600'],
+  chemistry: ['bg-purple-100', 'text-purple-600'],
 
   'christian-religious-studies':
     ['bg-red-100', 'text-red-600'],
@@ -851,7 +571,7 @@ const subjectColors = {
   economics:
     ['bg-teal-100', 'text-teal-600'],
 
-  'english':
+  english:
     ['bg-blue-100', 'text-blue-600'],
 
   'fine-art':
@@ -896,73 +616,36 @@ const subjectColors = {
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| GET SUBJECT COLOR
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   COLOR
+========================================================= */
 
 const getSubjectColor = (subject) => {
 
-  /*
-   * Support both:
-   *
-   * getSubjectColor(subject)
-   *
-   * and
-   *
-   * getSubjectColor('biology')
-   */
-
   const subjectId =
-
     typeof subject === 'object'
-
       ? subject?.id
-
       : subject
 
-
   const colors =
-
-    subjectColors[subjectId] ||
-
-    [
+    subjectColors[subjectId] || [
       'bg-slate-100',
       'text-slate-600'
     ]
 
-
   return {
-
-    bg:
-      colors[0],
-
-    text:
-      colors[1]
-
+    bg: colors[0],
+    text: colors[1]
   }
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| GET SUBJECT ICON
-|--------------------------------------------------------------------------
-|
-| Since the icon is already inside the
-| subject object, we don't need another
-| subjectIcons object.
-|
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   ICON
+========================================================= */
 
 const getSubjectIcon = (subject) => {
-
-  /*
-   * If subject is an object
-   */
 
   if (
     subject &&
@@ -970,48 +653,28 @@ const getSubjectIcon = (subject) => {
   ) {
 
     return (
-
       subject.icon ||
-
       'lucide:book-open'
-
     )
 
   }
 
-
-  /*
-   * If subject is an ID string
-   */
-
-  const foundSubject = SUBJECTS.find(
-
-    item => item.id === subject
-
-  )
-
+  const foundSubject =
+    SUBJECTS.find(
+      item => item.id === subject
+    )
 
   return (
-
     foundSubject?.icon ||
-
     'lucide:book-open'
-
   )
 
 }
 
 
-/*
-|--------------------------------------------------------------------------
-| EXPOSE SUBJECTS
-|--------------------------------------------------------------------------
-|
-| Only needed if you want to use SUBJECTS
-| outside this component.
-|
-|--------------------------------------------------------------------------
-*/
+/* =========================================================
+   EXPOSE
+========================================================= */
 
 defineExpose({
 

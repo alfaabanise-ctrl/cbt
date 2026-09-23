@@ -1,15 +1,18 @@
-
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Default capability",
   "windows": [
     "main",
-    "exam-window"
+    "exam-window",
+     "splashscreen"
   ],
   "permissions": [
     "core:default",
+
     "store:default",
+
+    "opener:default",
 
     "sql:allow-load",
     "sql:allow-execute",
@@ -29,6 +32,11 @@
     },
 
     "core:webview:allow-create-webview-window",
+    "core:window:allow-show",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-size",
+    "core:window:allow-center",
     "core:window:allow-set-maximizable",
     "core:window:allow-set-fullscreen",
     "core:window:allow-set-decorations",
@@ -39,4 +47,3 @@
     "fs:default"
   ]
 }
-

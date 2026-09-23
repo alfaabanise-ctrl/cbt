@@ -2,7 +2,7 @@
 
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Poppins, sans-serif;
    /* user-select: none; */
 }
 
@@ -69,4 +69,40 @@ body {
   --color-bad-bg:      #f7e9e2;
  
   --color-mid-bg:      #f4ecda;
+}
+
+
+/* assets/css/main.css */
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Default scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+/* Scrollbar track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Scrollbar thumb */
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.55);
+  border-radius: 999px;
+}
+
+/* Hover effect */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.85);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
 }

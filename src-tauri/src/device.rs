@@ -26,18 +26,13 @@ pub fn get_machine_identifier() -> Result<String, String> {
             "MachineGuid",
         ])
         .output()
-        .map_err(|e| {
-            format!("Failed to read Windows MachineGuid: {}", e)
-        })?;
+        .map_err(|e| format!("Failed to read Windows MachineGuid: {}", e))?;
 
     if !output.status.success() {
-        return Err(
-            "Failed to read Windows MachineGuid".to_string()
-        );
+        return Err("Failed to read Windows MachineGuid".to_string());
     }
 
-    let stdout =
-        String::from_utf8_lossy(&output.stdout);
+    let stdout = String::from_utf8_lossy(&output.stdout);
 
     // Example:
     //
@@ -48,26 +43,19 @@ pub fn get_machine_identifier() -> Result<String, String> {
         .lines()
         .find_map(|line| {
             if line.contains("MachineGuid") {
-                line.split_whitespace()
-                    .last()
-                    .map(|v| v.to_string())
+                line.split_whitespace().last().map(|v| v.to_string())
             } else {
                 None
             }
         })
-        .ok_or_else(|| {
-            "Windows MachineGuid was not found".to_string()
-        })?;
+        .ok_or_else(|| "Windows MachineGuid was not found".to_string())?;
 
     if uuid.trim().is_empty() {
-        return Err(
-            "Windows MachineGuid is empty".to_string()
-        );
+        return Err("Windows MachineGuid is empty".to_string());
     }
 
     Ok(uuid.trim().to_string())
 }
-
 
 /// ============================================================
 /// LINUX
@@ -76,16 +64,12 @@ pub fn get_machine_identifier() -> Result<String, String> {
 #[cfg(target_os = "linux")]
 pub fn get_machine_identifier() -> Result<String, String> {
     // Linux standard machine ID
-    let paths = [
-        "/etc/machine-id",
-        "/var/lib/dbus/machine-id",
-    ];
+    let paths = ["/etc/machine-id", "/var/lib/dbus/machine-id"];
 
     for path in paths {
         match std::fs::read_to_string(path) {
             Ok(value) => {
-                let machine_id =
-                    value.trim().to_string();
+                let machine_id = value.trim().to_string();
 
                 if !machine_id.is_empty() {
                     return Ok(machine_id);
@@ -98,11 +82,8 @@ pub fn get_machine_identifier() -> Result<String, String> {
         }
     }
 
-    Err(
-        "Linux machine ID could not be found".to_string()
-    )
+    Err("Linux machine ID could not be found".to_string())
 }
-
 
 /// ============================================================
 /// macOS
@@ -114,38 +95,20 @@ use std::process::Command;
 #[cfg(target_os = "macos")]
 pub fn get_machine_identifier() -> Result<String, String> {
     let output = Command::new("ioreg")
-        .args([
-            "-rd1",
-            "-c",
-            "IOPlatformExpertDevice",
-        ])
+        .args(["-rd1", "-c", "IOPlatformExpertDevice"])
         .output()
-        .map_err(|e| {
-            format!(
-                "Failed to execute ioreg: {}",
-                e
-            )
-        })?;
+        .map_err(|e| format!("Failed to execute ioreg: {}", e))?;
 
     if !output.status.success() {
-        return Err(
-            "Failed to read macOS IOPlatformUUID"
-                .to_string()
-        );
+        return Err("Failed to read macOS IOPlatformUUID".to_string());
     }
 
-    let stdout =
-        String::from_utf8_lossy(&output.stdout);
+    let stdout = String::from_utf8_lossy(&output.stdout);
 
     for line in stdout.lines() {
         if line.contains("IOPlatformUUID") {
-            if let Some((_, value)) =
-                line.split_once('=')
-            {
-                let uuid = value
-                    .trim()
-                    .trim_matches('"')
-                    .to_string();
+            if let Some((_, value)) = line.split_once('=') {
+                let uuid = value.trim().trim_matches('"').to_string();
 
                 if !uuid.is_empty() {
                     return Ok(uuid);
@@ -154,29 +117,17 @@ pub fn get_machine_identifier() -> Result<String, String> {
         }
     }
 
-    Err(
-        "macOS IOPlatformUUID was not found"
-            .to_string()
-    )
+    Err("macOS IOPlatformUUID was not found".to_string())
 }
-
 
 /// ============================================================
 /// FALLBACK FOR OTHER PLATFORMS
 /// ============================================================
 
-#[cfg(not(any(
-    target_os = "windows",
-    target_os = "linux",
-    target_os = "macos"
-)))]
+#[cfg(not(any(target_os = "windows", target_os = "linux", target_os = "macos")))]
 pub fn get_machine_identifier() -> Result<String, String> {
-    Err(
-        "Device ID is not supported on this platform"
-            .to_string()
-    )
+    Err("Device ID is not supported on this platform".to_string())
 }
-
 
 /// ============================================================
 /// CREATE VIREX DEVICE ID
@@ -198,8 +149,7 @@ pub fn get_machine_identifier() -> Result<String, String> {
 /// ============================================================
 
 pub fn create_device_id() -> Result<String, String> {
-    let machine_id =
-        get_machine_identifier()?;
+    let machine_id = get_machine_identifier()?;
 
     let mut hasher = Sha256::new();
 
@@ -208,13 +158,9 @@ pub fn create_device_id() -> Result<String, String> {
     // Changing this value would generate completely
     // different device IDs, so DON'T change it after
     // deploying your application.
-    hasher.update(
-        b"VIREX-CBT-DEVICE-V1:"
-    );
+    hasher.update(b"VIREX-CBT-DEVICE-V1:");
 
-    hasher.update(
-        machine_id.trim().as_bytes()
-    );
+    hasher.update(machine_id.trim().as_bytes());
 
     let result = hasher.finalize();
 

@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+
+  <title>ExamTips</title>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #ffffff;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Soft background decoration */
+    .background-top {
+      position: absolute;
+      top: -180px;
+      left: -180px;
+      width: 480px;
+      height: 350px;
+      background: #eaf6ff;
+      border-radius: 50%;
+      filter: blur(2px);
+    }
+
+    .background-bottom {
+      position: absolute;
+      right: -180px;
+      bottom: -180px;
+      width: 520px;
+      height: 380px;
+      background: #edf8ff;
+      border-radius: 50%;
+    }
+
+    /* Main splash content */
+    .splash-content {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 650px;
+      padding: 35px 25px;
+      text-align: center;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+
+      animation: fadeIn 0.8s ease-out;
+    }
+
+    /* Logo */
+    .logo {
+      width: min(88%, 540px);
+      max-height: 180px;
+      object-fit: contain;
+      display: block;
+      margin-bottom: 28px;
+    }
+
+    /* App tagline */
+    .tagline {
+      font-size: 18px;
+      font-weight: 400;
+      color: #64748b;
+      letter-spacing: 0.2px;
+      margin-bottom: 30px;
+    }
+
+    /* Loading indicator */
+    .loading-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .loading-bar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .loading-segment {
+      width: 70px;
+      height: 7px;
+      border-radius: 20px;
+      background: #dceafa;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .loading-segment.active {
+      background: #08a9e8;
+    }
+
+    .loading-segment.active::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.7),
+        transparent
+      );
+      animation: shimmer 1.5s infinite;
+    }
+
+    .loading-text {
+      color: #94a3b8;
+      font-size: 12px;
+      letter-spacing: 0.4px;
+    }
+
+    /* Animations */
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes shimmer {
+      from {
+        transform: translateX(-100%);
+      }
+
+      to {
+        transform: translateX(100%);
+      }
+    }
+
+    /* Mobile */
+    @media (max-width: 600px) {
+      .splash-content {
+        padding: 25px 18px;
+      }
+
+      .logo {
+        width: 92%;
+        margin-bottom: 22px;
+      }
+
+      .tagline {
+        font-size: 15px;
+        margin-bottom: 25px;
+      }
+
+      .loading-segment {
+        width: 48px;
+        height: 6px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="background-top"></div>
+  <div class="background-bottom"></div>
+
+  <main class="splash-content">
+
+    <img
+      src="images/logo.png"
+      alt="ExamTips"
+      class="logo"
+    />
+
+    <p class="tagline">
+      Preparing you for success...
+    </p>
+
+    <div class="loading-wrapper">
+
+      <div class="loading-bar">
+        <div class="loading-segment active"></div>
+        <div class="loading-segment"></div>
+        <div class="loading-segment"></div>
+      </div>
+
+      <p class="loading-text">
+        Loading your learning experience
+      </p>
+
+    </div>
+
+  </main>
+
+</body>
+</html>

@@ -7,9 +7,7 @@ export default defineNuxtConfig({
     enabled: false,
   },
 
-  modules: [
-    "@nuxt/icon",
-  ],
+  modules: ["@nuxt/icon", "@nuxt/fonts", "@nuxt/ui"],
 
   // Tauri application
   ssr: false,
@@ -27,7 +25,16 @@ export default defineNuxtConfig({
       tailwindcss(),
     ],
   },
+  icon: {
+    // Prevent icons from requesting Iconify online
+    provider: "none",
 
+    // Automatically scan your project for icons
+    clientBundle: {
+      scan: true,
+      includeCustomCollections: true,
+    },
+  },
   app: {
     baseURL: "./",
     pageTransition: {
