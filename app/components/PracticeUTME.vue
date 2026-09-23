@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex h-full pt-16 sm:pt-0 min-h-0 w-full flex-col overflow-hidden bg-[#f8f9fc] text-[#201f22] font-['Inter',system-ui,sans-serif]"
+    class="flex h-full  sm:pt-0 min-h-0 w-full flex-col overflow-hidden bg-[#f8f9fc] text-[#201f22] font-['Inter',system-ui,sans-serif]"
   >
     <!-- MAIN CONTENT -->
     <main class="min-h-0 flex-1 overflow-y-hidden  p-2 pb-24 pt-2 sm:px-3">

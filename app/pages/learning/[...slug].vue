@@ -28,18 +28,14 @@
 
       <!-- PAGE TITLE -->
       <div class="min-w-0 flex-1">
-        <p
-          class="truncate text-[10px] uppercase tracking-widest text-white/60"
-        >
-          {{ breadcrumbSubject || 'Learning' }}
+        <p class="truncate text-[10px] uppercase tracking-widest text-white/60">
+          {{ breadcrumbSubject || "Learning" }}
 
-          <span v-if="breadcrumbTopic">
-            / {{ breadcrumbTopic }}
-          </span>
+          <span v-if="breadcrumbTopic"> / {{ breadcrumbTopic }} </span>
         </p>
 
         <h1 class="truncate text-sm font-semibold sm:text-base">
-          {{ currentLesson?.title || selectedSubject?.name || 'Learning' }}
+          {{ currentLesson?.title || selectedSubject?.name || "Learning" }}
         </h1>
       </div>
 
@@ -78,7 +74,7 @@
       </div>
     </div>
 
-    <!-- PROGRESS BAR -->
+    <!-- SUBJECT PROGRESS BAR -->
     <div class="h-1 w-full shrink-0 bg-slate-100">
       <div
         class="h-full bg-gold transition-all duration-300"
@@ -120,7 +116,7 @@
 
             <div class="min-w-0">
               <h2 class="truncate text-sm font-bold text-navy">
-                {{ selectedSubject?.name || breadcrumbSubject || 'Subject' }}
+                {{ selectedSubject?.name || breadcrumbSubject || "Subject" }}
               </h2>
 
               <p class="mt-0.5 text-xs text-slate-500">
@@ -132,9 +128,7 @@
           <!-- SUBJECT PROGRESS -->
           <div class="mt-4">
             <div class="mb-1 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400">
-                Reading progress
-              </span>
+              <span class="text-[11px] text-slate-400"> Reading progress </span>
 
               <span class="text-[11px] font-bold text-navy">
                 {{ progressPercent }}%
@@ -212,15 +206,13 @@
                     ? 'border-navy bg-white font-semibold text-navy'
                     : 'border-transparent text-slate-600 hover:bg-white hover:text-navy'
                 "
-                @click="sidebarOpen = false"
+                @click="handleLessonNavigation"
               >
                 <Icon
                   name="lucide:file-text"
                   class="h-4 w-4 shrink-0"
                   :class="
-                    isCurrentLesson(lesson)
-                      ? 'text-gold'
-                      : 'text-slate-400'
+                    isCurrentLesson(lesson) ? 'text-gold' : 'text-slate-400'
                   "
                 />
 
@@ -228,9 +220,17 @@
                   {{ lesson.title }}
                 </span>
 
+                <!-- SAVED TIME -->
+                <span
+                  v-if="getCurrentLessonTime(lesson) > 0"
+                  class="hidden text-[9px] text-slate-400 xl:inline"
+                >
+                  {{ formatReadingTime(getCurrentLessonTime(lesson)) }}
+                </span>
+
                 <!-- READ STATUS -->
                 <Icon
-                  v-if="isLessonRead(lesson)"
+                  v-if="isCurrentLessonRead(lesson)"
                   name="lucide:check-circle-2"
                   class="h-4 w-4 shrink-0 text-emerald-500"
                   title="Read"
@@ -249,7 +249,9 @@
       </aside>
 
       <!-- MAIN CONTENT -->
-      <main class="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-white">
+      <main
+        class="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-white"
+      >
         <!-- SEARCH RESULTS -->
         <div
           v-if="showSearchResults"
@@ -313,7 +315,7 @@
           </div>
         </div>
 
-        <!-- SUBJECT LANDING PAGE / PDF -->
+        <!-- SUBJECT LANDING PAGE -->
         <article
           v-else-if="!currentLesson"
           class="mx-auto w-full max-w-5xl px-4 py-7 sm:px-10 sm:py-10"
@@ -328,7 +330,7 @@
             </span>
 
             <h1 class="mt-4 text-2xl font-bold text-slate-900 sm:text-4xl">
-              {{ selectedSubject?.name || breadcrumbSubject || 'Subject' }}
+              {{ selectedSubject?.name || breadcrumbSubject || "Subject" }}
             </h1>
 
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
@@ -371,7 +373,7 @@
             ></iframe>
           </div>
 
-          <!-- NO PDF FALLBACK -->
+          <!-- NO PDF -->
           <div
             v-else
             class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-12 text-center sm:px-6 sm:py-16"
@@ -382,7 +384,7 @@
             />
 
             <h2 class="mt-4 text-lg font-bold text-slate-700">
-              Welcome to {{ selectedSubject?.name || 'this subject' }}
+              Welcome to {{ selectedSubject?.name || "this subject" }}
             </h2>
 
             <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
@@ -442,9 +444,7 @@
 
             <Icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
 
-            <span class="font-semibold text-slate-600">
-              Lesson
-            </span>
+            <span class="font-semibold text-slate-600"> Lesson </span>
           </div>
 
           <!-- LESSON TITLE -->
@@ -491,7 +491,9 @@
           </div>
 
           <!-- AUTOMATIC READING PROGRESS -->
-          <div class="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5">
+          <div
+            class="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+          >
             <div class="flex items-start justify-between gap-3">
               <div class="flex min-w-0 items-start gap-3">
                 <div
@@ -516,16 +518,16 @@
                   <h3 class="text-sm font-bold text-slate-800 sm:text-base">
                     {{
                       isLessonRead(currentLesson)
-                        ? 'Reading completed'
-                        : 'Study this lesson'
+                        ? "Reading completed"
+                        : "Study this lesson"
                     }}
                   </h3>
 
                   <p class="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
                     {{
                       isLessonRead(currentLesson)
-                        ? 'You have spent enough active reading time on this lesson.'
-                        : 'Read and understand the material. The lesson will be marked as read after 80% of the estimated reading time.'
+                        ? "Your active reading time has been saved for this lesson."
+                        : "Read and understand the material. The lesson will be marked as read after 80% of the estimated reading time."
                     }}
                   </p>
                 </div>
@@ -539,15 +541,17 @@
                     : 'bg-white text-slate-500'
                 "
               >
-                {{ isLessonRead(currentLesson) ? 'Read' : 'In progress' }}
+                {{ isLessonRead(currentLesson) ? "Read" : "In progress" }}
               </span>
             </div>
 
+            <!-- TIME CARDS -->
             <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div class="rounded-xl bg-white p-3">
                 <p class="text-[10px] uppercase tracking-wide text-slate-400">
                   Estimated time
                 </p>
+
                 <p class="mt-1 text-lg font-bold text-navy">
                   {{ estimatedReadingMinutes }} min
                 </p>
@@ -557,6 +561,7 @@
                 <p class="text-[10px] uppercase tracking-wide text-slate-400">
                   Required time
                 </p>
+
                 <p class="mt-1 text-lg font-bold text-navy">
                   {{ requiredReadingMinutes }} min
                 </p>
@@ -564,14 +569,16 @@
 
               <div class="col-span-2 rounded-xl bg-white p-3 sm:col-span-1">
                 <p class="text-[10px] uppercase tracking-wide text-slate-400">
-                  Active reading
+                  Saved active time
                 </p>
+
                 <p class="mt-1 text-lg font-bold text-navy">
                   {{ formatReadingTime(readingSeconds) }}
                 </p>
               </div>
             </div>
 
+            <!-- READING PROGRESS -->
             <div class="mt-5">
               <div class="mb-2 flex items-center justify-between gap-3">
                 <span class="text-xs font-semibold text-slate-600">
@@ -587,9 +594,7 @@
                 <div
                   class="h-full rounded-full transition-all duration-500"
                   :class="
-                    isLessonRead(currentLesson)
-                      ? 'bg-emerald-500'
-                      : 'bg-gold'
+                    isLessonRead(currentLesson) ? 'bg-emerald-500' : 'bg-gold'
                   "
                   :style="{ width: `${readingProgressPercent}%` }"
                 ></div>
@@ -597,14 +602,11 @@
 
               <p class="mt-2 text-[11px] leading-5 text-slate-500">
                 <span v-if="!isLessonRead(currentLesson)">
-                  {{ remainingReadingMinutes }} minute(s) remaining.
-                  Switching tabs pauses the reading timer.
+                  {{ remainingReadingMinutes }} minute(s) remaining. Switching
+                  tabs pauses the reading timer.
                 </span>
 
-                <span
-                  v-else
-                  class="font-semibold text-emerald-600"
-                >
+                <span v-else class="font-semibold text-emerald-600">
                   Great work! This lesson has been automatically marked as read.
                 </span>
               </p>
@@ -700,17 +702,10 @@
     </Teleport>
   </div>
 </template>
+<script setup lang="ts">
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 
-<script setup>
-import {
-  ref,
-  computed,
-  watch,
-  onMounted,
-  onBeforeUnmount
-} from 'vue'
-
-const route = useRoute()
+const route = useRoute();
 
 const {
   sidebar,
@@ -720,48 +715,60 @@ const {
   loadLesson,
   adjacentLesson,
   search,
-  loading
-} = useLessons()
+  loading,
+} = useLessons();
 
 /*
 |--------------------------------------------------------------------------
-| CATCH-ALL ROUTE PARAMETERS
+| LESSON PROGRESS COMPOSABLE
 |--------------------------------------------------------------------------
-|
-| File location:
-| app/pages/learning/[...slug].vue
-|
-| Examples:
-| /learning/chemistry
-| /learning/chemistry/intro-to-acids
-|
-| route.params.slug becomes:
-| ['chemistry']
-| ['chemistry', 'intro-to-acids']
+*/
+
+const {
+  readingSeconds,
+  estimatedReadingMinutes,
+  readingCompleted,
+  requiredReadingMinutes,
+  readingProgressPercent,
+  remainingReadingMinutes,
+
+  loadLessonProgress,
+  getLessonTime,
+  isLessonRead,
+  getSubjectProgress,
+
+  flushReadingTime,
+  resetReadingTracker,
+  stopReadingTimer,
+  formatReadingTime,
+} = useLessonProgress();
+/*
+|--------------------------------------------------------------------------
+| ROUTE PARAMETERS
 |--------------------------------------------------------------------------
 */
 
 const routeSegments = computed(() => {
-  const value = route.params.slug
+  const value = route.params.slug;
 
   if (Array.isArray(value)) {
-    return value.map(String)
+    return value.map(String);
   }
 
   if (value) {
-    return [String(value)]
+    return [String(value)];
   }
 
-  return []
-})
+  return [];
+});
 
 const routeSubjectSlug = computed(() => {
-  return routeSegments.value[0] || ''
-})
+  return routeSegments.value[0] || "";
+});
 
 const routeLessonSlug = computed(() => {
-  return routeSegments.value[1] || ''
-})
+  return routeSegments.value[1] || "";
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -769,16 +776,16 @@ const routeLessonSlug = computed(() => {
 |--------------------------------------------------------------------------
 */
 
-const sidebarOpen = ref(false)
-const searchTerm = ref('')
-const showSearchResults = ref(false)
+const sidebarOpen = ref(false);
+const searchTerm = ref("");
+const showSearchResults = ref(false);
 
-const prevLesson = ref(null)
-const nextLesson = ref(null)
+const prevLesson = ref<any>(null);
+const nextLesson = ref<any>(null);
 
-const openSubjects = ref(new Set())
+const openSubjects = ref(new Set());
 
-let debounceTimer = null
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
 /*
 |--------------------------------------------------------------------------
@@ -786,309 +793,80 @@ let debounceTimer = null
 |--------------------------------------------------------------------------
 */
 
-const showDelete = ref(false)
-const deleteType = ref('topic')
-const deleteId = ref('')
-const deleteName = ref('')
+const showDelete = ref(false);
+const deleteType = ref("topic");
+const deleteId = ref("");
+const deleteName = ref("");
 
 /*
 |--------------------------------------------------------------------------
-| READ LESSONS
+| LESSON IDENTIFICATION
 |--------------------------------------------------------------------------
 */
 
-const readLessons = ref([])
+const lessonKey = (lesson: any) => {
+  return String(lesson?.id || lesson?.lessonId || lesson?.slug || "");
+};
 
-/*
-|--------------------------------------------------------------------------
-| ACTIVE READING TIME
-|--------------------------------------------------------------------------
-| The lesson is automatically marked as read after 80% of its
-| estimated reading time. The timer pauses when the user leaves
-| the browser tab/window.
-*/
-
-const readingSeconds = ref(0)
-const estimatedReadingMinutes = ref(1)
-const readingTimer = ref(null)
-const readingSessionKey = ref('')
-const readingCompleted = ref(false)
-
-const requiredReadingSeconds = computed(() => {
-  return Math.max(
-    60,
-    Math.ceil(estimatedReadingMinutes.value * 60 * 0.8)
-  )
-})
-
-const requiredReadingMinutes = computed(() => {
-  return Math.ceil(requiredReadingSeconds.value / 60)
-})
-
-const readingProgressPercent = computed(() => {
-  if (!requiredReadingSeconds.value) return 0
-
-  return Math.min(
-    100,
-    Math.round(
-      (readingSeconds.value / requiredReadingSeconds.value) * 100
-    )
-  )
-})
-
-const remainingReadingSeconds = computed(() => {
-  return Math.max(
-    0,
-    requiredReadingSeconds.value - readingSeconds.value
-  )
-})
-
-const remainingReadingMinutes = computed(() => {
-  return Math.ceil(remainingReadingSeconds.value / 60)
-})
-
-const formatReadingTime = (seconds = 0) => {
-  const totalSeconds = Math.max(0, Math.floor(seconds))
-  const minutes = Math.floor(totalSeconds / 60)
-  const remainingSeconds = totalSeconds % 60
-
-  return `${String(minutes).padStart(2, '0')}:${String(
-    remainingSeconds
-  ).padStart(2, '0')}`
-}
-
-const getLessonText = (lesson) => {
-  if (!lesson) return ''
-
-  const blocks = Array.isArray(lesson.blocks)
-    ? lesson.blocks
-        .map((block) => {
-          if (typeof block === 'string') return block
-
-          return [
-            block?.content,
-            block?.text,
-            block?.body,
-            block?.description,
-            block?.title
-          ]
-            .filter(Boolean)
-            .join(' ')
-        })
-        .join(' ')
-    : ''
-
-  return [
-    lesson.title,
-    lesson.content,
-    lesson.body,
-    lesson.description,
-    blocks
-  ]
-    .filter(Boolean)
-    .join(' ')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-}
-
-const calculateReadingTime = (lesson) => {
-  const textContent = getLessonText(lesson)
-  const wordCount = textContent
-    ? textContent.split(/\s+/).filter(Boolean).length
-    : 180
-
-  // 150 words per minute gives students enough time to read carefully.
-  const wordsPerMinute = 150
-
-  estimatedReadingMinutes.value = Math.max(
-    1,
-    Math.ceil(wordCount / wordsPerMinute)
-  )
-}
-
-const stopReadingTimer = () => {
-  if (readingTimer.value) {
-    clearInterval(readingTimer.value)
-    readingTimer.value = null
-  }
-}
-
-const startReadingTimer = () => {
-  if (
-    !import.meta.client ||
-    !currentLesson.value ||
-    isLessonRead(currentLesson.value) ||
-    readingTimer.value
-  ) {
-    return
-  }
-
-  readingTimer.value = setInterval(() => {
-    if (
-      document.hidden ||
-      !currentLesson.value ||
-      readingCompleted.value
-    ) {
-      return
-    }
-
-    readingSeconds.value += 1
-
-    if (
-      readingSeconds.value >= requiredReadingSeconds.value
-    ) {
-      readingCompleted.value = true
-      markLessonAsRead(currentLesson.value)
-      stopReadingTimer()
-    }
-  }, 1000)
-}
-
-const resetReadingTracker = (lesson) => {
-  stopReadingTimer()
-
-  readingSeconds.value = 0
-  readingCompleted.value = false
-  readingSessionKey.value = lessonKey(lesson)
-
-  calculateReadingTime(lesson)
-
-  if (lesson && isLessonRead(lesson)) {
-    readingCompleted.value = true
-    readingSeconds.value = requiredReadingSeconds.value
-    return
-  }
-
-  startReadingTimer()
-}
-
-const handleReadingVisibility = () => {
-  if (document.hidden) {
-    stopReadingTimer()
-  } else {
-    startReadingTimer()
-  }
-}
-
-const readStorageKey = computed(() => {
-  return `read-lessons-${
-    routeSubjectSlug.value || 'default-subject'
-  }`
-})
-
-const loadReadLessons = () => {
-  if (!import.meta.client) return
-
-  try {
-    const saved = localStorage.getItem(readStorageKey.value)
-
-    readLessons.value = saved ? JSON.parse(saved) : []
-
-    if (!Array.isArray(readLessons.value)) {
-      readLessons.value = []
-    }
-  } catch {
-    readLessons.value = []
-  }
-}
-
-const saveReadLessons = () => {
-  if (!import.meta.client) return
-
-  localStorage.setItem(
-    readStorageKey.value,
-    JSON.stringify(readLessons.value)
-  )
-}
-
-const lessonKey = (lesson) => {
-  return String(
-    lesson?.id ||
-      lesson?.lessonId ||
-      lesson?.slug ||
-      ''
-  )
-}
-
-const isLessonRead = (lesson) => {
-  const key = lessonKey(lesson)
-
-  if (!key) return false
-
-  return readLessons.value.includes(key)
-}
-
-const markLessonAsRead = (lesson) => {
-  const key = lessonKey(lesson)
-
-  if (!key) return
-
-  if (!readLessons.value.includes(key)) {
-    readLessons.value.push(key)
-    saveReadLessons()
-  }
-
-  readingCompleted.value = true
-  stopReadingTimer()
-}
-
-/*
-|--------------------------------------------------------------------------
-| SUBJECT HELPERS
-|--------------------------------------------------------------------------
-*/
-
-const createSlug = (text = '') => {
+const createSlug = (text = "") => {
   return String(text)
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+};
+
+/*
+|--------------------------------------------------------------------------
+| SUBJECT
+|--------------------------------------------------------------------------
+*/
 
 const selectedSubject = computed(() => {
-  const subjectSlug = routeSubjectSlug.value
+  const subjectSlug = routeSubjectSlug.value;
 
-  if (!subjectSlug) {
-    return null
-  }
+  if (!subjectSlug) return null;
 
   return (
-    sidebar.value.find((subject) => {
+    sidebar.value.find((subject: any) => {
       return (
         subject.slug === subjectSlug ||
         String(subject.id) === String(subjectSlug) ||
         createSlug(subject.name) === subjectSlug
-      )
+      );
     }) || null
-  )
-})
+  );
+});
+
+const currentSubjectKey = computed(() => {
+  return (
+    selectedSubject.value?.slug || routeSubjectSlug.value || "default-subject"
+  );
+});
 
 const selectedSubjectTopics = computed(() => {
-  return selectedSubject.value?.topics || []
-})
+  return selectedSubject.value?.topics || [];
+});
 
 const totalLessons = computed(() => {
-  return selectedSubjectTopics.value.reduce((total, topic) => {
-    return total + (topic.lessons?.length || 0)
-  }, 0)
-})
+  return selectedSubjectTopics.value.reduce((total: number, topic: any) => {
+    return total + (topic.lessons?.length || 0);
+  }, 0);
+});
 
 const allSubjectLessons = computed(() => {
-  return selectedSubjectTopics.value.flatMap((topic) => {
-    return topic.lessons || []
-  })
-})
+  return selectedSubjectTopics.value.flatMap(
+    (topic: any) => topic.lessons || []
+  );
+});
 
 const firstLesson = computed(() => {
-  return allSubjectLessons.value[0] || null
-})
+  return allSubjectLessons.value[0] || null;
+});
 
 const subjectPdfUrl = computed(() => {
-  const subject = selectedSubject.value
+  const subject = selectedSubject.value;
 
   return (
     subject?.pdfUrl ||
@@ -1096,10 +874,32 @@ const subjectPdfUrl = computed(() => {
     subject?.pdf ||
     subject?.documentUrl ||
     subject?.document_url ||
-    ''
-  )
-})
+    ""
+  );
+});
 
+/*
+|--------------------------------------------------------------------------
+| LESSON PROGRESS HELPERS
+|--------------------------------------------------------------------------
+*/
+
+const getCurrentLessonTime = (lesson: any) => {
+  return getLessonTime(currentSubjectKey.value, lesson);
+};
+
+const isCurrentLessonRead = (lesson: any) => {
+  return isLessonRead(currentSubjectKey.value, lesson);
+};
+
+/*
+|--------------------------------------------------------------------------
+| SUBJECT PROGRESS
+|--------------------------------------------------------------------------
+*/
+const progressPercent = computed(() => {
+  return getSubjectProgress(currentSubjectKey.value);
+});
 /*
 |--------------------------------------------------------------------------
 | ROUTE HELPERS
@@ -1111,35 +911,42 @@ const subjectSlug = computed(() => {
     selectedSubject.value?.slug ||
     routeSubjectSlug.value ||
     createSlug(breadcrumbSubject.value)
-  )
-})
+  );
+});
 
-const lessonUrl = (lesson) => {
+const lessonUrl = (lesson: any) => {
   if (!lesson?.slug) {
-    return `/learning/${subjectSlug.value}`
+    return `/learning/${subjectSlug.value}`;
   }
 
-  return `/learning/${subjectSlug.value}/${lesson.slug}`
-}
+  return `/learning/${subjectSlug.value}/${lesson.slug}`;
+};
 
-const lessonSearchUrl = (row) => {
-  const subject = row?.subjectSlug || subjectSlug.value
-  const lesson = row?.slug
+const lessonSearchUrl = (row: any) => {
+  const subject = row?.subjectSlug || subjectSlug.value;
+
+  const lesson = row?.slug;
 
   if (subject && lesson) {
-    return `/learning/${subject}/${lesson}`
+    return `/learning/${subject}/${lesson}`;
   }
 
   if (subject) {
-    return `/learning/${subject}`
+    return `/learning/${subject}`;
   }
 
-  return '/learning'
-}
+  return "/learning";
+};
 
-const isCurrentLesson = (lesson) => {
-  return routeLessonSlug.value === String(lesson?.slug || '')
-}
+const isCurrentLesson = (lesson: any) => {
+  return routeLessonSlug.value === String(lesson?.slug || "");
+};
+
+const handleLessonNavigation = () => {
+  flushReadingTime();
+  stopReadingTimer();
+  sidebarOpen.value = false;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1148,48 +955,20 @@ const isCurrentLesson = (lesson) => {
 */
 
 const breadcrumbSubject = computed(() => {
-  return (
-    selectedSubject.value?.name ||
-    currentLesson.value?.subjectName ||
-    ''
-  )
-})
+  return selectedSubject.value?.name || currentLesson.value?.subjectName || "";
+});
 
 const breadcrumbTopic = computed(() => {
-  if (!currentLesson.value) return ''
+  if (!currentLesson.value) return "";
 
-  const topicId =
-    currentLesson.value.topic_id ||
-    currentLesson.value.topicId
+  const topicId = currentLesson.value.topic_id || currentLesson.value.topicId;
 
-  const topic = selectedSubjectTopics.value.find((item) => {
-    return String(item.id) === String(topicId)
-  })
+  const topic = selectedSubjectTopics.value.find((item: any) => {
+    return String(item.id) === String(topicId);
+  });
 
-  return (
-    topic?.title ||
-    currentLesson.value?.topicTitle ||
-    ''
-  )
-})
-
-/*
-|--------------------------------------------------------------------------
-| PROGRESS
-|--------------------------------------------------------------------------
-*/
-
-const progressPercent = computed(() => {
-  const lessons = allSubjectLessons.value
-
-  if (!lessons.length) return 0
-
-  const readCount = lessons.filter((lesson) => {
-    return isLessonRead(lesson)
-  }).length
-
-  return Math.round((readCount / lessons.length) * 100)
-})
+  return topic?.title || currentLesson.value?.topicTitle || "";
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -1197,38 +976,43 @@ const progressPercent = computed(() => {
 |--------------------------------------------------------------------------
 */
 
-const openLessonBySlug = async (slug) => {
-  sidebarOpen.value = false
-  showSearchResults.value = false
+const openLessonBySlug = async (slug: string) => {
+  flushReadingTime();
+  stopReadingTimer();
+
+  sidebarOpen.value = false;
+  showSearchResults.value = false;
 
   if (!slug) {
-    prevLesson.value = null
-    nextLesson.value = null
-    return
+    prevLesson.value = null;
+    nextLesson.value = null;
+    return;
   }
 
-  await loadLesson(slug)
+  await loadLesson(slug);
+  if (currentLesson.value) {
+    resetReadingTracker(
+      currentSubjectKey.value,
+      currentLesson.value,
+      totalLessons.value
+    );
+  }
 
-  resetReadingTracker(currentLesson.value)
+  prevLesson.value = await adjacentLesson("previous");
+  nextLesson.value = await adjacentLesson("next");
 
-  prevLesson.value = await adjacentLesson('previous')
-  nextLesson.value = await adjacentLesson('next')
-
-  const owner = sidebar.value.find((subject) => {
-    return subject.topics?.some((topic) => {
-      return topic.lessons?.some((lesson) => {
-        return lesson.slug === slug
-      })
-    })
-  })
+  const owner = sidebar.value.find((subject: any) => {
+    return subject.topics?.some((topic: any) => {
+      return topic.lessons?.some((lesson: any) => {
+        return lesson.slug === slug;
+      });
+    });
+  });
 
   if (owner) {
-    openSubjects.value = new Set([
-      ...openSubjects.value,
-      owner.id
-    ])
+    openSubjects.value = new Set([...openSubjects.value, owner.id]);
   }
-}
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1237,25 +1021,27 @@ const openLessonBySlug = async (slug) => {
 */
 
 const onSearchInput = () => {
-  clearTimeout(debounceTimer)
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
 
-  const term = searchTerm.value.trim()
+  const term = searchTerm.value.trim();
 
   if (!term) {
-    showSearchResults.value = false
-    return
+    showSearchResults.value = false;
+    return;
   }
 
   debounceTimer = setTimeout(async () => {
-    showSearchResults.value = true
-    await search(term)
-  }, 250)
-}
+    showSearchResults.value = true;
+    await search(term);
+  }, 250);
+};
 
 const clearSearch = () => {
-  searchTerm.value = ''
-  showSearchResults.value = false
-}
+  searchTerm.value = "";
+  showSearchResults.value = false;
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1263,31 +1049,28 @@ const clearSearch = () => {
 |--------------------------------------------------------------------------
 */
 
-const openDelete = (type, item) => {
-  deleteType.value = type
-  deleteId.value = item?.id || ''
+const openDelete = (type: string, item: any) => {
+  deleteType.value = type;
+  deleteId.value = item?.id || "";
 
-  deleteName.value =
-    type === 'subject'
-      ? item?.name || ''
-      : item?.title || ''
+  deleteName.value = type === "subject" ? item?.name || "" : item?.title || "";
 
-  showDelete.value = true
-}
+  showDelete.value = true;
+};
 
 const closeDelete = () => {
-  showDelete.value = false
-}
+  showDelete.value = false;
+};
 
 const handleDeleted = async () => {
-  showDelete.value = false
+  showDelete.value = false;
 
-  await loadSidebar()
+  await loadSidebar();
 
   if (currentLesson.value?.slug) {
-    await openLessonBySlug(currentLesson.value.slug)
+    await openLessonBySlug(currentLesson.value.slug);
   }
-}
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1296,34 +1079,62 @@ const handleDeleted = async () => {
 */
 
 const handleLessonUpdated = async () => {
+  flushReadingTime();
+
   if (routeLessonSlug.value) {
-    await openLessonBySlug(routeLessonSlug.value)
+    await openLessonBySlug(routeLessonSlug.value);
   }
-}
+};
 
 /*
 |--------------------------------------------------------------------------
-| OTHER HELPERS
+| SEARCH SNIPPET
 |--------------------------------------------------------------------------
 */
 
-const renderSnippet = (snippet) => {
-  if (!snippet) return ''
+const renderSnippet = (snippet: any) => {
+  if (!snippet) return "";
 
   return String(snippet)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
     .replace(
       /⟦/g,
       '<mark class="bg-transparent font-semibold text-navy border-b-2 border-gold">'
     )
-    .replace(/⟧/g, '</mark>')
-}
+    .replace(/⟧/g, "</mark>");
+};
+
+/*
+|--------------------------------------------------------------------------
+| NAVIGATION
+|--------------------------------------------------------------------------
+*/
 
 const goHome = () => {
-  navigateTo('/')
-}
+  flushReadingTime();
+  stopReadingTimer();
+  navigateTo("/");
+};
+
+/*
+|--------------------------------------------------------------------------
+| VISIBILITY
+|--------------------------------------------------------------------------
+*/
+
+const handleReadingVisibility = () => {
+  if (document.hidden) {
+    stopReadingTimer();
+  } else if (currentLesson.value) {
+    resetReadingTracker(
+      currentSubjectKey.value,
+      currentLesson.value,
+      totalLessons.value
+    );
+  }
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1332,57 +1143,53 @@ const goHome = () => {
 */
 
 onMounted(async () => {
-  loadReadLessons()
+  loadLessonProgress();
 
   if (import.meta.client) {
-    document.addEventListener(
-      'visibilitychange',
-      handleReadingVisibility
-    )
+    document.addEventListener("visibilitychange", handleReadingVisibility);
   }
 
-  await loadSidebar()
+  await loadSidebar();
 
-  const lessonSlug = routeLessonSlug.value
+  const lessonSlug = routeLessonSlug.value;
 
   if (lessonSlug) {
-    await openLessonBySlug(lessonSlug)
+    await openLessonBySlug(lessonSlug);
   }
-})
+});
 
 watch(
   () => routeSubjectSlug.value,
   () => {
-    loadReadLessons()
+    loadLessonProgress();
   }
-)
+);
 
 watch(
   () => routeLessonSlug.value,
   (lessonSlug, oldLessonSlug) => {
-    if (lessonSlug && lessonSlug !== oldLessonSlug) {
-      openLessonBySlug(lessonSlug)
+    if (lessonSlug !== oldLessonSlug) {
+      openLessonBySlug(lessonSlug);
     }
   }
-)
+);
 
 onBeforeUnmount(() => {
-  clearTimeout(debounceTimer)
-  stopReadingTimer()
+  flushReadingTime();
+  stopReadingTimer();
+
+  if (debounceTimer) {
+    clearTimeout(debounceTimer);
+  }
 
   if (import.meta.client) {
-    document.removeEventListener(
-      'visibilitychange',
-      handleReadingVisibility
-    )
+    document.removeEventListener("visibilitychange", handleReadingVisibility);
   }
-})
-</script>
-
-<style scoped>
+});
+</script><style scoped>
 .prose-lesson :deep(br) {
   display: block;
-  content: '';
+  content: "";
   margin-top: 0.7em;
 }
 </style>
