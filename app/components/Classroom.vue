@@ -1,11 +1,14 @@
 <template>
-  <div class="flex h-full min-h-0 flex-col overflow-hidden bg-bg text-ink font-['Inter',system-ui,sans-serif]">
 
+    <div
+  class="flex h-full min-h-screen bg-bg w-full min-h-0 flex-col overflow-hidden bg-cover bg-center bg-no-repeat text-ink font-['Inter',system-ui,sans-serif]"
+ 
+>
     <!-- ================================================= -->
     <!-- HEADER -->
     <!-- ================================================= -->
 
-    <header class="flex flex-col gap-3 bg-navy px-4 py-3 text-white shadow-md sm:px-6">
+    <header class="flex flex-col gap-3 bg-primary px-4 py-3 text-white shadow-md sm:px-6">
 
       <!-- title row -->
       <div class="flex items-center justify-between">
@@ -75,7 +78,7 @@
     <!-- MAIN -->
     <!-- ================================================= -->
 
-    <main class="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+    <main class="min-h-[] h-80 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
 
       <!-- EMPTY STATE -->
       <div v-if="!studySubjects.length" class="flex h-full flex-col items-center justify-center text-center">
@@ -260,8 +263,17 @@ const closeAddUser = () => {
   showAddUser.value = false
 }
 
-const openSubject = (subject) => {
-  emit('open-subject', subject)
+const openSubject = async (subject) => {
+  console.log('Selected subject:', subject)
+
+  if (!subject?.slug && !subject?.id) {
+    return
+  }
+
+  const subjectSlug =
+    subject.slug || subject.id
+
+  await navigateTo(`/learning/${subjectSlug}`)
 }
 
 const goHome = () => emit('gohome')

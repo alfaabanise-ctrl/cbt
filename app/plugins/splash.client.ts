@@ -1,18 +1,40 @@
-import { defineNuxtPlugin } from "#app"
-import { WebviewWindow } from "@tauri-apps/api/webviewWindow"
+import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 
-export default defineNuxtPlugin(async () => {
-  if (!import.meta.client) return
+export default defineNuxtPlugin(() => {
+  if (!import.meta.client) return;
 
-  try {
-    const splash = await WebviewWindow.getByLabel("splashscreen")
-    const main = await WebviewWindow.getByLabel("main")
+  let started = false;
 
-    await main?.show()
-    await main?.setFocus()
+  const openMainWindow = async () => {
+    if (started) return;
+    started = true;
 
-    await splash?.close()
-  } catch (error) {
-    console.error("Splash screen error:", error)
-  }
-})
+    try {
+      const mainWindow = await WebviewWindow.getByLabel("main");
+
+      if (!mainWindow) {
+        console.error("Main window was not found.");
+        return;
+      }
+
+      // Give Nuxt a short moment to finish mounting.
+      await new Promise((resolve) => setTimeout(resolve, 700));
+
+      await mainWindow.show();
+      await mainWindow.setFocus();
+
+      const splashWindow =
+        await WebviewWindow.getByLabel("splashscreen");
+
+      if (splashWindow) {
+        await splashWindow.close();
+      }
+    } catch (error) {
+      console.error("Failed to open main window:", error);
+    }
+  };
+
+  window.addEventListener("load", openMainWindow, {
+    once: true,
+  });
+});

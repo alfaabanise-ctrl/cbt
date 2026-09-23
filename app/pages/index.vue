@@ -5,7 +5,7 @@
     style="background-image: url('/image/background.png')"
   >
     <!-- BACKGROUND OVERLAY -->
-    <div class="page-overlay pt-20">
+    <div class="page-overlay  mt-20 sm:mt-10 pt-28">
       
       <!-- MAIN BOOK CONTAINER -->
       <main class="book">
@@ -115,7 +115,7 @@
         <!-- ================= SECOND PAGE ================= -->
         <section
           :class="{ active: appState.showSecond }"
-          class="page second"
+          class="page  second"
         >
           <!-- UTME -->
           <div
@@ -154,7 +154,7 @@
             v-else-if="appState.currentPage === 'LESSON'"
             class="page-content"
           >
-            <lessonViewer @gohome="closeBook" />
+            <!-- <lessonViewer @gohome="closeBook" /> -->
           </div>
 
           <!-- QUESTION SEARCH -->

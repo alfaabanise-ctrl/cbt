@@ -43,20 +43,23 @@ onMounted(async () => {
       console.error("Failed to show main window:", error);
     }
   }
-    await platform.dicDatase.getDictDB()
-    // await platform.database.initializeDatabase()
-    await platform.lesson.initializeLessonsDatabase()
-    await platform.lesson.getSidebar()
-    console.log("Tauri databases initialized successfully")
 
-      const appWindow = getCurrentWindow()
+  const appWindow = getCurrentWindow()
 
-    await appWindow.setSize(
-      new LogicalSize(390, 844)
-    )
+    // await appWindow.setSize(
+    //   new LogicalSize(390, 844)
+    // )
 
     await appWindow.center()
     await appWindow.setResizable(true)
+    await platform.dicDatase.getDictDB()
+    await platform.database.initializeDatabase()
+    await platform.lesson.initializeLessonsDatabase()
+    // await platform.lesson.getSidebar()
+    console.log("Tauri databases initialized successfully")
+
+      
+    
   } catch (error) {
     console.error("Failed to initialize Tauri databases:", error)
   }
