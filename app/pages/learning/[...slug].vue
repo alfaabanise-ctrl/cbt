@@ -475,10 +475,10 @@
 
           <!-- TOPIC IMPORTER -->
           <div class="mt-5">
-            <TopicImporter
+            <!-- <TopicImporter
               :lesson-id="currentLesson.id ?? currentLesson.lessonId"
               @updated="handleLessonUpdated"
-            />
+            /> -->
           </div>
 
           <!-- LESSON BLOCKS -->
@@ -492,7 +492,7 @@
 
           <!-- AUTOMATIC READING PROGRESS -->
           <div
-            class="mt-10 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
+            class="mt-10 hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
           >
             <div class="flex items-start justify-between gap-3">
               <div class="flex min-w-0 items-start gap-3">
@@ -514,8 +514,9 @@
                   />
                 </div>
 
-                <div class="min-w-0">
-                  <h3 class="text-sm font-bold text-slate-800 sm:text-base">
+                <div class="min-w-0 hidden">
+
+                  <h3 class="text-sm  hidden font-bold text-slate-800 sm:text-base">
                     {{
                       isLessonRead(currentLesson)
                         ? "Reading completed"

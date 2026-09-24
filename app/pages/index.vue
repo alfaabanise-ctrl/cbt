@@ -1,9 +1,15 @@
 <template>
   <!-- PAGE BACKGROUND -->
+
   <div
     class="page-background"
     style="background-image: url('/image/background.png')"
   >
+  <NavigationNavbar 
+   @dictionary="openBook({ component: 'DICTIONARY' })" 
+     @bookmarks="openBook({ component: 'BOOKMARKS' })"
+      @leaderboard="openBook({ component: 'LEADERBOARD' })" 
+   />
     <!-- BACKGROUND OVERLAY -->
     <div class="page-overlay  mt-20 sm:mt-10 pt-28">
       
@@ -178,6 +184,12 @@
           >
             <Leaderboard @gohome="closeBook" />
           </div>
+           <div
+            v-else-if="appState.currentPage === 'BOOKMARKS'"
+            class="page-content"
+          >
+            <Bookmarks @gohome="closeBook" />
+          </div>
         </section>
       </main>
     </div>
@@ -187,12 +199,13 @@
 <script setup>
 import { ref } from "vue";
 
-definePageMeta({
-  layout: "main",
-});
+// definePageMeta({
+//   layout: "main",
+// });
 
 const appState = useAppState();
 const auth = useExamTipsAuth();
+
 const currentUser = computed(() => {
   return auth.user?.value || auth.user || {}
 })

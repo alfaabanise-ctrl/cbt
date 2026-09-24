@@ -11,7 +11,7 @@ const Submitted =  ref(false)
 const showExamReport = ref(false)
 const showSubmitModal = ref(false)
 const examHeader = ref(null)
-const { save, load,histories } = useExamHistory()
+const { save, load, histories } = useExamHistory()
 const activeSubject = ref(
   appState.selectedSubjects?.[0]?.id || null
 )
@@ -76,6 +76,43 @@ const goToQuestion = (index) => {
   } catch (error) {
     console.log(error)
   }
+}
+
+
+const showBookmarkModal = ref(false)
+
+const bookmarkedQuestion = ref({})
+
+const bookmarkQuestion = async () => {
+  // Use your existing bookmark function here
+  await saveBookmark(currentQuestion.value)
+
+  // Store the exact question that was bookmarked
+  bookmarkedQuestion.value = {
+    examType:
+      currentQuestion.value.examType ||
+      examType.value ||
+      'objective',
+
+    subject:
+      currentQuestion.value.subject ||
+      currentSubject.value?.name ||
+      currentSubject.value ||
+      'Unknown subject',
+
+    year:
+      currentQuestion.value.year ||
+      examYear.value ||
+      '',
+
+    questionNumber:
+      currentQuestion.value.questionNumber ||
+      currentQuestion.value.number ||
+      currentQuestionIndex.value + 1,
+  }
+
+  // Open the modal
+  showBookmarkModal.value = true
 }
 
 const previous = () => {
@@ -630,7 +667,11 @@ const getQuestionClass = (question, index) => {
 </script>
 <template>
   <div class="min-h-screen w-screen overflow-hidden bg-white">
-
+    <BookmarkModal
+  :visible="showBookmarkModal"
+  :question="bookmarkedQuestion"
+  @close="showBookmarkModal = false"
+/>
     <!-- TOP RIGHT CONTROLS -->
     <div
       class="fixed right-0 top-2 z-[100] flex h-12 items-center justify-end px-2 sm:px-6 lg:px-8"
@@ -644,7 +685,12 @@ const getQuestionClass = (question, index) => {
     </div>
 
     <!-- NAVBAR -->
-    <NavigationExamNavBar ref="examHeader" />
+    <NavigationExamNavBar ref="examHeader"
+   
+   :current-question="currentQuestion"
+  :question-number="currentSubject?.currentQuestion"
+  @time-finished="submitExam"
+ />
 
     <!-- RESULT MODAL -->
     <div
@@ -801,7 +847,7 @@ const getQuestionClass = (question, index) => {
              <button
               v-if="Submitted"
               @click="showExamReport = true"
-              class="rounded-sm bg-orange-800 h-fit w-fit px-3 py-1 text-sm text-white"
+              class="rounded-sm sm:hidden block bg-orange-800 h-fit w-fit px-3 py-1 text-sm text-white"
             >
               Result
             </button>

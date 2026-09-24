@@ -276,6 +276,21 @@ export async function initializeDatabase() {
     // Upgrade old exam_answers tables
     // ========================================================
 
+    await db.execute(`
+    CREATE TABLE IF NOT EXISTS bookmarks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      question_id TEXT NOT NULL UNIQUE,
+      exam_type TEXT,
+      subject TEXT,
+      year TEXT,
+      question_number INTEGER,
+      question_text TEXT NOT NULL,
+      options TEXT,
+      correct_answer TEXT,
+      explanation TEXT,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
     await migrateExamAnswers(db)
 
     console.log(

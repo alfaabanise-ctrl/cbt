@@ -6,7 +6,7 @@
     <main class="min-h-0 flex-1 overflow-y-hidden  p-2 pb-24 pt-2 sm:px-3">
       <!-- HERO BANNER -->
       <section
-        class="relative mb-3 overflow-hidden flex justify-between rounded-sm bg-[#1e1b4b] p-3 text-white shadow-sm"
+        class="relative mb-3 overflow-hidden flex justify-between rounded-sm bg-primary p-3 text-white shadow-sm"
       >
         <div class="relative z-10 max-w-[85%]">
           <div class="mb-2 flex items-center gap-1.5">
@@ -558,7 +558,7 @@
           type="button"
           @click="startExam"
           :disabled="isStarting"
-          class="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm bg-[#4f46e5] px-2 text-xs font-semibold text-white shadow-sm transition hover:bg-[#4338ca] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          class="flex h-9 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm bg-primary px-2 text-xs font-semibold text-white shadow-sm transition hover:bg-primary/95 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
           <Icon
             :name="isStarting ? 'lucide:loader-circle' : 'lucide:play'"

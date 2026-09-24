@@ -1,227 +1,250 @@
-```vue
 <template>
   <div
-    class="min-h-full bg-[#f6f3ec]  flex flex-col   font-sans text-[#201f22]"
+    class="flex min-h-screen flex-col bg-[#f6f3ec] font-sans text-[#201f22]"
   >
     <!-- =========================================================
          HEADER
     ========================================================== -->
-    <header
-      class="flex flex flext-1 min-h-[4.25rem] items-center justify-between bg-[#24304a] px-5 text-[#f4efe2]"
-    >
-      <div class="flex items-center gap-3">
-        <div
-          class="flex h-11 w-11 items-center justify-center rounded-xl bg-white/10 text-xl"
-        >
-          <Icon name="lucide:shield-check" />
-        </div>
-
-        <div>
-          <h1 class="font-serif text-lg font-semibold">
-            Product Activation
-          </h1>
-
-          <p class="mt-0.5 text-xs text-[#f4efe2]/65">
-            Activate premium features on this device
-          </p>
-        </div>
-      </div>
-
-      <button
-        type="button"
-        class="flex h-10 w-10 items-center justify-center rounded-xl text-white transition hover:bg-white/10"
-        @click="goHome"
-        aria-label="Go home"
+    <header class="bg-[#24304a] text-[#f4efe2]">
+      <div
+        class="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8"
       >
-        <Icon name="lucide:house" class="text-lg" />
-      </button>
+        <!-- BRAND -->
+        <div class="flex min-w-0 items-center gap-3">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-[#f4efe2] sm:h-11 sm:w-11"
+          >
+            <Icon name="lucide:shield-check" size="21" />
+          </div>
+
+          <div class="min-w-0">
+            <h1 class="truncate text-base font-medium sm:text-lg">
+              Product Activation
+            </h1>
+
+            <p class="mt-0.5 text-[10px] leading-4 text-[#f4efe2]/65 sm:text-xs">
+              Activate premium features on this device
+            </p>
+          </div>
+        </div>
+
+        <!-- HOME BUTTON -->
+        <button
+          type="button"
+          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-white transition hover:bg-white/10 sm:h-10 sm:w-10"
+          @click="goHome"
+          aria-label="Go home"
+        >
+          <Icon name="lucide:house" size="18" />
+        </button>
+      </div>
     </header>
 
     <!-- =========================================================
          PAGE NAVIGATION
     ========================================================== -->
     <nav
-      class="mx-auto grid max-w-[900px] grid-cols-1 gap-2.5 px-4 py-2 sm:grid-cols-3"
+      class="mx-auto w-full max-w-6xl overflow-x-auto px-3 py-3 sm:px-6 lg:px-8"
     >
-      <button
-        v-for="item in pages"
-        :key="item.id"
-        type="button"
-        class="flex  min-h-10 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold transition"
-        :class="
-          selectedPage === item.id
-            ? 'border-[#24304a] bg-[#24304a] text-white shadow-sm'
-            : 'border-[#e6e0d2] bg-[#fffdf8] text-[#6b665c] hover:border-[#3c4c6e] hover:text-[#24304a]'
-        "
-        @click="selectedPage = item.id"
+      <div
+        class="mx-auto grid min-w-[480px] max-w-[900px] grid-cols-3 gap-2 sm:min-w-0 sm:gap-3"
       >
-        <Icon :name="item.icon" class="h-4 w-4" />
-        <span>{{ item.name }}</span>
-      </button>
+        <button
+          v-for="item in pages"
+          :key="item.id"
+          type="button"
+          class="flex min-h-11 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-[11px] font-medium transition sm:gap-2 sm:px-4 sm:text-sm"
+          :class="
+            selectedPage === item.id
+              ? 'border-[#24304a] bg-[#24304a] text-white shadow-sm'
+              : 'border-[#e6e0d2] bg-[#fffdf8] text-[#6b665c] hover:border-[#b9873b] hover:text-[#24304a]'
+          "
+          @click="selectedPage = item.id"
+        >
+          <Icon :name="item.icon" class="h-4 w-4 shrink-0" />
+          <span class="truncate">{{ item.name }}</span>
+        </button>
+      </div>
     </nav>
 
     <!-- =========================================================
-         MAIN
+         MAIN CONTENT
     ========================================================== -->
     <main
-      class="mx-auto w-[calc(100%-2rem)] max-w-[900px] pb-16"
+      class="mx-auto w-full max-w-6xl flex-1 px-3 pb-10 sm:px-6 lg:px-8 lg:pb-16"
     >
-    
-
       <!-- =======================================================
            ACTIVATE WITH KEY
       ======================================================== -->
       <section
         v-if="selectedPage === 1"
-        class="rounded-xl  flex items-center justify-center border border-[#e6e0d2] bg-[#fffdf8] p-5 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6"
+        class="rounded-2xl border border-[#e6e0d2] bg-[#fffdf8] p-4 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6 md:p-8"
       >
-       
-
-        <form class="w-3/5" @submit.prevent="activateWithKey">
-         
-
-          <!-- LICENSE KEY -->
-          <div class="mb-5 w-">
-            <label
-              for="licenseKey"
-              class="mb-1.5 block text-xs font-semibold"
-            >
-              License / Activation Key
-              <span class="text-[#ab5137]">*</span>
-            </label>
-
+        <div class="mx-auto w-full max-w-xl">
+          <!-- SECTION INTRO -->
+          <div class="mb-6 text-center sm:mb-7">
             <div
-              class="flex min-h-12 items-center gap-2.5 rounded-xl border bg-white px-3 transition focus-within:border-[#3c4c6e] focus-within:ring-4 focus-within:ring-[#3c4c6e]/10"
-              :class="
-                errors.licenseKey
-                  ? 'border-[#ab5137]'
-                  : 'border-[#e6e0d2]'
-              "
+              class="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#24304a]/10 text-[#24304a]"
             >
-              <Icon
-                name="lucide:key-round"
-                class="shrink-0 text-[#6b665c]"
-              />
-
-              <input
-                id="licenseKey"
-                v-model.trim="form.licenseKey"
-                type="text"
-                placeholder="XXXX-XXXX-XXXX-XXXX"
-                autocomplete="off"
-                class="w-full border-0 bg-transparent font-mono text-sm tracking-widest text-[#201f22] uppercase outline-none placeholder:tracking-normal placeholder:text-[#aaa59b]"
-                @input="formatLicenseKey"
-              />
-
-              <button
-                v-if="form.licenseKey"
-                type="button"
-                class="flex shrink-0 items-center justify-center text-[#6b665c] hover:text-[#24304a]"
-                @click="form.licenseKey = ''"
-                aria-label="Clear license key"
-              >
-                <Icon name="lucide:x" />
-              </button>
+              <Icon name="lucide:key-round" size="24" />
             </div>
 
-            <small
-              v-if="errors.licenseKey"
-              class="mt-1 block text-[11px] text-[#ab5137]"
-            >
-              {{ errors.licenseKey }}
-            </small>
+            <h2 class="text-lg font-medium text-[#24304a] sm:text-xl">
+              Activate with License Key
+            </h2>
 
-            <p class="mt-1.5 text-[11px] text-[#6b665c]">
-              Your activation key normally contains letters and numbers.
+            <p class="mt-1 text-xs leading-5 text-[#6b665c] sm:text-sm">
+              Enter your activation key to unlock premium features.
             </p>
           </div>
 
-          <!-- DEVICE ID -->
-          <div class="mb-5 hidden">
-            <label class="mb-1.5 block text-xs font-semibold">
-              Device ID
-            </label>
+          <form @submit.prevent="activateWithKey">
+            <!-- LICENSE KEY -->
+            <div class="mb-5">
+              <label
+                for="licenseKey"
+                class="mb-1.5 block text-xs font-medium text-[#201f22] sm:text-sm"
+              >
+                License / Activation Key
+                <span class="text-[#ab5137]">*</span>
+              </label>
 
-            <div
-              class="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-dashed border-[#e6e0d2] bg-[#f6f3ec] p-2 pl-3"
-            >
-              <div class="flex min-w-0 items-center gap-2.5">
+              <div
+                class="flex min-h-12 w-full items-center gap-2 rounded-xl border bg-white px-3 transition focus-within:border-[#24304a] focus-within:ring-4 focus-within:ring-[#24304a]/10"
+                :class="
+                  errors.licenseKey
+                    ? 'border-[#ab5137]'
+                    : 'border-[#e6e0d2]'
+                "
+              >
                 <Icon
-                  name="lucide:monitor-smartphone"
+                  name="lucide:key-round"
                   class="shrink-0 text-[#6b665c]"
+                  size="18"
                 />
 
-                <span
-                  class="truncate font-mono text-[11px] text-[#201f22]"
+                <input
+                  id="licenseKey"
+                  v-model.trim="form.licenseKey"
+                  type="text"
+                  placeholder="XXXX-XXXX-XXXX-XXXX"
+                  autocomplete="off"
+                  class="min-w-0 w-full border-0 bg-transparent font-mono text-xs tracking-wider text-[#201f22] uppercase outline-none placeholder:tracking-normal placeholder:text-[#aaa59b] sm:text-sm"
+                  @input="formatLicenseKey"
+                />
+
+                <button
+                  v-if="form.licenseKey"
+                  type="button"
+                  class="flex shrink-0 items-center justify-center text-[#6b665c] transition hover:text-[#24304a]"
+                  @click="form.licenseKey = ''"
+                  aria-label="Clear license key"
                 >
-                  {{ deviceId || 'Detecting device...' }}
-                </span>
+                  <Icon name="lucide:x" size="17" />
+                </button>
               </div>
 
-              <button
-                type="button"
-                class="flex shrink-0 items-center gap-1.5 rounded-lg border border-[#e6e0d2] bg-[#fffdf8] px-2.5 py-2 text-[11px] font-medium text-[#24304a] transition hover:bg-[#eee9dc] disabled:cursor-not-allowed disabled:opacity-50"
-                :disabled="!deviceId"
-                @click="copyDeviceId"
+              <small
+                v-if="errors.licenseKey"
+                class="mt-1 block text-[11px] text-[#ab5137]"
               >
-                <Icon name="lucide:copy" />
-                Copy
-              </button>
+                {{ errors.licenseKey }}
+              </small>
+
+              <p class="mt-1.5 text-[11px] leading-4 text-[#6b665c]">
+                Your activation key normally contains letters and numbers.
+              </p>
             </div>
 
-            <p class="mt-1.5 text-[11px] text-[#6b665c]">
-              Your license may be linked to this device.
-            </p>
-          </div>
-
-          <!-- TERMS -->
-          <label
-            class="mt-5 flex cursor-pointer items-start gap-2 text-xs leading-5 text-[#6b665c]"
-          >
-            <input
-              v-model="form.acceptTerms"
-              type="checkbox"
-              class="mt-1 h-4 w-4 rounded border-[#e6e0d2] accent-[#24304a]"
-            />
-
-            <span>
-              I agree to the
-
-              <button
-                type="button"
-                class="font-medium text-[#24304a] underline underline-offset-2 hover:text-[#3c4c6e]"
-                @click="selectedPage = 3"
+            <!-- DEVICE ID -->
+            <div class="mb-5 hidden">
+              <label
+                class="mb-1.5 block text-xs font-medium text-[#201f22]"
               >
-                License Terms & Conditions
-              </button>
-            </span>
-          </label>
+                Device ID
+              </label>
 
-          <p
-            v-if="errors.terms"
-            class="mt-1 text-[11px] text-[#ab5137]"
-          >
-            {{ errors.terms }}
-          </p>
+              <div
+                class="flex min-h-12 items-center justify-between gap-3 rounded-xl border border-dashed border-[#e6e0d2] bg-[#f6f3ec] p-2 pl-3"
+              >
+                <div class="flex min-w-0 items-center gap-2">
+                  <Icon
+                    name="lucide:monitor-smartphone"
+                    class="shrink-0 text-[#6b665c]"
+                  />
 
-          <!-- SUBMIT -->
-          <button
-            type="submit"
-            class="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#24304a] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#3c4c6e] disabled:cursor-not-allowed disabled:opacity-60"
-            :disabled="loading"
-          >
-            <Icon
-              :name="
-                loading
-                  ? 'lucide:loader-circle'
-                  : 'lucide:shield-check'
-              "
-              :class="{ 'animate-spin': loading }"
-            />
+                  <span
+                    class="truncate font-mono text-[10px] text-[#201f22] sm:text-[11px]"
+                  >
+                    {{ deviceId || "Detecting device..." }}
+                  </span>
+                </div>
 
-            {{ loading ? 'Activating...' : 'Activate Product' }}
-          </button>
-        </form>
+                <button
+                  type="button"
+                  class="flex shrink-0 items-center gap-1 rounded-lg border border-[#e6e0d2] bg-[#fffdf8] px-2.5 py-2 text-[11px] font-medium text-[#24304a] transition hover:bg-[#eee9dc] disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="!deviceId"
+                  @click="copyDeviceId"
+                >
+                  <Icon name="lucide:copy" size="14" />
+                  Copy
+                </button>
+              </div>
+
+              <p class="mt-1.5 text-[11px] text-[#6b665c]">
+                Your license may be linked to this device.
+              </p>
+            </div>
+
+            <!-- TERMS -->
+            <label
+              class="mt-5 flex cursor-pointer items-start gap-2.5 text-xs leading-5 text-[#6b665c]"
+            >
+              <input
+                v-model="form.acceptTerms"
+                type="checkbox"
+                class="mt-1 h-4 w-4 shrink-0 rounded border-[#e6e0d2] accent-[#24304a]"
+              />
+
+              <span>
+                I agree to the
+                <button
+                  type="button"
+                  class="font-medium text-[#24304a] underline underline-offset-2 transition hover:text-[#b9873b]"
+                  @click="selectedPage = 3"
+                >
+                  License Terms & Conditions
+                </button>
+              </span>
+            </label>
+
+            <p
+              v-if="errors.terms"
+              class="mt-1 text-[11px] text-[#ab5137]"
+            >
+              {{ errors.terms }}
+            </p>
+
+            <!-- SUBMIT -->
+            <button
+              type="submit"
+              class="mt-5 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#24304a] px-4 text-sm font-medium text-white transition hover:bg-[#3c4c6e] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+              :disabled="loading"
+            >
+              <Icon
+                :name="
+                  loading
+                    ? 'lucide:loader-circle'
+                    : 'lucide:shield-check'
+                "
+                :class="{ 'animate-spin': loading }"
+                size="18"
+              />
+
+              {{ loading ? "Activating..." : "Activate Product" }}
+            </button>
+          </form>
+        </div>
       </section>
 
       <!-- =======================================================
@@ -229,48 +252,62 @@
       ======================================================== -->
       <section
         v-if="selectedPage === 2"
-        class="rounded-2xl border border-[#e6e0d2] bg-[#fffdf8] p-5 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6"
+        class="rounded-2xl border border-[#e6e0d2] bg-[#fffdf8] p-4 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6 md:p-8"
       >
-        <PurchaseActivation @activated="isActivated = true" />
+        <PurchaseActivation
+          @activated="isActivated = true"
+        />
       </section>
 
       <!-- =======================================================
-           TERMS
+           LICENSE TERMS
       ======================================================== -->
       <section
         v-if="selectedPage === 3"
-        class="rounded-sm border border-[#e6e0d2] bg-[#fffdf8] p-3 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6"
+        class="rounded-2xl border border-[#e6e0d2] bg-[#fffdf8] p-4 shadow-[0_5px_20px_rgba(36,48,74,0.04)] sm:p-6 md:p-8"
       >
-        <div class="mb-2 flex items-center gap-1">
-          
+        <div class="mb-5 flex items-start gap-3">
+          <div
+            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#24304a]/10 text-[#24304a]"
+          >
+            <Icon name="lucide:file-text" size="20" />
+          </div>
 
           <div>
-            <h2 class="font-serif text-lg font-semibold text-[#24304a]">
+            <h2 class="text-lg font-medium text-[#24304a] sm:text-xl">
               License Terms & Conditions
             </h2>
 
-            
+            <p class="mt-1 text-xs leading-5 text-[#6b665c]">
+              Please read the terms before activating the application.
+            </p>
           </div>
         </div>
 
-        <div class="flex flex-col g">
-          <article v-for="term in licenseTerms" :key="term.number" class=" border-[#e6e0d2] ">
-           
+        <div class="space-y-4">
+          <article
+            v-for="term in licenseTerms"
+            :key="term.number"
+            class="flex items-start gap-3 border-b border-[#eee8dc] pb-4 last:border-0 last:pb-0"
+          >
+            <span
+              class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#24304a] text-[11px] font-medium text-white"
+            >
+              {{ term.number }}
+            </span>
 
-            <p class="text-md leading-6 text-[#6b665c]">
-              {{ term.number }}. {{ term.text }}</p>
+            <p class="text-xs leading-6 text-[#6b665c] sm:text-sm">
+              {{ term.text }}
+            </p>
           </article>
-
-         
-
         </div>
 
         <button
           type="button"
-          class="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#24304a] px-4 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[#3c4c6e]"
+          class="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#24304a] px-4 text-sm font-medium text-white transition hover:bg-[#3c4c6e]"
           @click="selectedPage = 1"
         >
-          <Icon name="lucide:key-round" />
+          <Icon name="lucide:key-round" size="18" />
           Activate with Key
         </button>
       </section>
@@ -278,19 +315,18 @@
       <!-- =======================================================
            FEATURES
       ======================================================== -->
-      <section
-        class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3"
-      >
+      <section class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div
-          class="flex gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
+          class="flex items-start gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
         >
           <Icon
             name="lucide:book-open-check"
-            class="shrink-0 text-[#b9873b]"
+            class="mt-0.5 shrink-0 text-[#b9873b]"
+            size="20"
           />
 
           <div>
-            <h3 class="text-xs font-semibold">
+            <h3 class="text-xs font-medium text-[#24304a]">
               Premium Lessons
             </h3>
 
@@ -301,15 +337,16 @@
         </div>
 
         <div
-          class="flex gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
+          class="flex items-start gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
         >
           <Icon
             name="lucide:bar-chart-3"
-            class="shrink-0 text-[#b9873b]"
+            class="mt-0.5 shrink-0 text-[#b9873b]"
+            size="20"
           />
 
           <div>
-            <h3 class="text-xs font-semibold">
+            <h3 class="text-xs font-medium text-[#24304a]">
               Advanced Results
             </h3>
 
@@ -320,15 +357,16 @@
         </div>
 
         <div
-          class="flex gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
+          class="flex items-start gap-3 rounded-xl border border-[#e6e0d2] bg-[#fffdf8] p-4"
         >
           <Icon
             name="lucide:database"
-            class="shrink-0 text-[#b9873b]"
+            class="mt-0.5 shrink-0 text-[#b9873b]"
+            size="20"
           />
 
           <div>
-            <h3 class="text-xs font-semibold">
+            <h3 class="text-xs font-medium text-[#24304a]">
               Full Question Bank
             </h3>
 
@@ -353,7 +391,7 @@
     >
       <div
         v-if="message"
-        class="fixed bottom-5 right-5 z-[100] flex max-w-[400px] items-center gap-2.5 rounded-xl bg-[#24304a] px-4 py-3 text-xs text-white shadow-2xl"
+        class="fixed bottom-4 left-3 right-3 z-[100] flex items-start gap-2.5 rounded-xl bg-[#24304a] px-4 py-3 text-xs text-white shadow-2xl sm:bottom-5 sm:left-auto sm:right-5 sm:max-w-[400px]"
         :class="
           messageType === 'success'
             ? 'border-l-4 border-[#3f7a5c]'
@@ -366,18 +404,21 @@
               ? 'lucide:circle-check'
               : 'lucide:circle-alert'
           "
-          class="shrink-0"
+          class="mt-0.5 shrink-0"
+          size="17"
         />
 
-        <span>{{ message }}</span>
+        <span class="flex-1 leading-5">
+          {{ message }}
+        </span>
 
         <button
           type="button"
-          class="ml-auto flex shrink-0 text-white/80 hover:text-white"
+          class="flex shrink-0 text-white/80 hover:text-white"
           @click="message = ''"
           aria-label="Close message"
         >
-          <Icon name="lucide:x" />
+          <Icon name="lucide:x" size="16" />
         </button>
       </div>
     </Transition>

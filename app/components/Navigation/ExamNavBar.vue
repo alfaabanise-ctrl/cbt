@@ -1,16 +1,55 @@
 <template>
   <div class="bg-primary">
-    <div
-      v-if="showCalculator"
-      class="fixed top-0 left-0 inset-0 z-100 pointer-events-none"
-    >
-      <Calculator @close="openCalculator" class="pointer-events-auto" />
-    </div>
+    <!-- ========================================= -->
+    <!-- BOOKMARK SUCCESS MODAL -->
+    <!-- ========================================= -->
+
+    <BookmarkModal
+      :visible="showBookmarkModal"
+      :question="bookmarkedQuestion"
+      @close="closeBookmarkModal"
+    />
+
+    <!-- ========================================= -->
+    <!-- BOOKMARK ERROR MESSAGE -->
+    <!-- ========================================= -->
+
+    <Teleport to="body">
+      <Transition name="fade">
+        <p
+          v-if="bookmarkError"
+          class="fixed bottom-5 left-1/2 z-[10000] -translate-x-1/2 rounded-lg bg-red-600 px-4 py-3 text-center text-sm text-white shadow-xl"
+        >
+          {{ bookmarkError }}
+        </p>
+      </Transition>
+    </Teleport>
+
+    <!-- ========================================= -->
+    <!-- CALCULATOR -->
+    <!-- ========================================= -->
+
+    <Teleport to="body">
+      <div
+        v-if="showCalculator"
+        class="pointer-events-none fixed inset-0 top-0 z-[100]"
+      >
+        <Calculator
+          class="pointer-events-auto"
+          @close="openCalculator"
+        />
+      </div>
+    </Teleport>
+
+    <!-- ========================================= -->
+    <!-- TOP HEADER -->
+    <!-- ========================================= -->
+
     <header
       class="fixed inset-x-0 top-0 z-50 h-12 border-b border-white/10 bg-primary text-white shadow-lg"
     >
       <div
-        class="mx-auto flex h-full w-full items-center justify-between px-4 sm:px-6 lg:px-8"
+        class="mx-auto flex h-full w-full items-center justify-between px-3 sm:px-6 lg:px-8"
       >
         <!-- ================================= -->
         <!-- LEFT: EXAM TOOLS -->
@@ -21,14 +60,21 @@
             v-for="tool in examTools"
             :key="tool.label"
             type="button"
-            class="exam-tool-button"
+            class="exam-tool-button group"
+            :aria-label="tool.label"
+            :title="tool.label"
             @click="tool.onClick"
           >
-            <Icon :name="tool.icon" class="  text-lg shrink-0
-         transition-transform duration-200
-         group-hover:scale-110 "/>
+            <Icon
+              :name="tool.icon"
+              class="shrink-0 text-lg transition-transform duration-200 group-hover:scale-110"
+            />
 
-            <span class=" hidden  text-medium font-medium md:flex">{{ tool.label }}</span>
+            <span
+              class="hidden text-sm font-medium md:flex"
+            >
+              {{ tool.label }}
+            </span>
           </button>
         </nav>
 
@@ -36,38 +82,44 @@
         <!-- RIGHT: USER + TIMER -->
         <!-- ================================= -->
 
-        <div class="flex items-center gap-3 sm:gap-5">
-          <!-- User -->
+        <div class="flex items-center gap-2 sm:gap-5">
+          <!-- USER -->
           <div class="hidden items-center gap-2 sm:flex">
             <div
               class="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 ring-1 ring-white/20"
             >
-              <Icon name="lucide:user-round" class="h-5 w-5" />
+              <Icon
+                name="lucide:user-round"
+                class="h-5 w-5"
+              />
             </div>
 
-            <span class="max-w-[100px]  capitalize truncate text-sm font- sm:text-base">
-              {{ currentUser.firstName }}
+            <span
+              class="max-w-[120px] truncate text-sm font-medium capitalize sm:text-base"
+            >
+              {{ currentUser.firstName || "Candidate" }}
             </span>
           </div>
 
-          <!-- Timer -->
           <!-- TIMER -->
-            <ExamTimer
-  ref="timer"
-  :duration="examDuration"
-  :auto-start="false"
-  @finished="timeFinished"
-  @tick="ticking"
-/>
-            
+          <ExamTimer
+            ref="timer"
+            :duration="examDuration"
+            :auto-start="false"
+            @finished="timeFinished"
+            @tick="ticking"
+          />
         </div>
       </div>
     </header>
 
+    <!-- HEADER SPACING -->
+    <div class="h-12 w-full bg-primary"></div>
+
     <!-- ========================================= -->
     <!-- LEAVE EXAM CONFIRMATION -->
     <!-- ========================================= -->
-    <div class="w-full h-12 bg-primary"></div>
+
     <Teleport to="body">
       <Transition name="modal">
         <div
@@ -76,23 +128,33 @@
           @click.self="logoutNotice = false"
         >
           <!-- MODAL -->
-          <div
-            class="w-full max-w-md overflow-hidden rounded-sm bg-white shadow-2xl"
+          <section
+            class="w-full max-w-md overflow-hidden rounded-xl bg-white shadow-2xl"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="leave-exam-title"
           >
-            <!-- HEADER -->
-            <div
-              class="flex items-center justify-between border-b border-slate-100 px-6 py-4"
+            <!-- MODAL HEADER -->
+            <header
+              class="flex items-center justify-between border-b border-slate-100 px-5 py-4 sm:px-6"
             >
               <div class="flex items-center gap-3">
-                <!-- Exit Icon -->
                 <div
                   class="flex h-11 w-11 items-center justify-center rounded-full bg-orange-50 text-orange-600"
                 >
-                  <Icon name="lucide:log-out" class="h-5 w-5" />
+                  <Icon
+                    name="lucide:log-out"
+                    class="h-5 w-5"
+                  />
                 </div>
 
                 <div>
-                  <h2 class="text-lg font-bold text-slate-900">Leave Exam</h2>
+                  <h2
+                    id="leave-exam-title"
+                    class="text-lg font-bold text-slate-900"
+                  >
+                    Leave Exam
+                  </h2>
 
                   <p class="text-xs text-slate-500">
                     Exit your current examination
@@ -100,27 +162,40 @@
                 </div>
               </div>
 
-              <!-- CLOSE -->
+              <!-- CLOSE BUTTON -->
               <button
                 type="button"
-                @click="logoutNotice = false"
+                aria-label="Close leave exam dialog"
                 class="flex h-9 w-9 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                @click="logoutNotice = false"
               >
-                <Icon name="lucide:x" class="h-5 w-5" />
+                <Icon
+                  name="lucide:x"
+                  class="h-5 w-5"
+                />
               </button>
-            </div>
+            </header>
 
-            <!-- BODY -->
-            <div class="px-6 py-6">
-              <div class="flex items-start gap-4 rounded-xl bg-amb0 p-4">
+            <!-- MODAL BODY -->
+            <div class="px-5 py-6 sm:px-6">
+              <div
+                class="flex items-start gap-3 rounded-xl bg-amber-50 p-4"
+              >
+                <Icon
+                  name="lucide:alert-triangle"
+                  class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"
+                />
+
                 <div>
                   <p class="text-sm font-bold text-slate-800">
                     Do you want to leave the exam?
                   </p>
 
-                  <p class="mt-1 text-sm leading-6 text-slate-600">
-                    Your current exam progress may be lost. You can return to
-                    the practice page.
+                  <p
+                    class="mt-1 text-sm leading-6 text-slate-600"
+                  >
+                    Your current exam progress may be lost. You can
+                    return to the practice page.
                   </p>
                 </div>
               </div>
@@ -129,30 +204,36 @@
               <div
                 class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
               >
-                <!-- Continue Exam -->
+                <!-- CONTINUE EXAM -->
                 <button
                   type="button"
+                  class="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 sm:flex-none"
                   @click="logoutNotice = false"
-                  class="flex flex-1 items-center justify-center gap-2 rounded-sm border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95 sm:flex-none"
                 >
-                  <Icon name="lucide:arrow-left" class="h-4 w-4" />
+                  <Icon
+                    name="lucide:arrow-left"
+                    class="h-4 w-4"
+                  />
 
                   Continue Exam
                 </button>
 
-                <!-- Leave Exam -->
+                <!-- LEAVE EXAM -->
                 <button
                   type="button"
+                  class="flex min-h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-95 sm:flex-none"
                   @click="logout"
-                  class="flex flex-1 items-center justify-center gap-2 rounded-sm bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-95 sm:flex-none"
                 >
-                  <Icon name="lucide:log-out" class="h-4 w-4" />
+                  <Icon
+                    name="lucide:log-out"
+                    class="h-4 w-4"
+                  />
 
                   Leave Exam
                 </button>
               </div>
             </div>
-          </div>
+          </section>
         </div>
       </Transition>
     </Teleport>
@@ -160,59 +241,196 @@
 </template>
 
 <script setup>
+import { computed, ref } from "vue"
+import { useBookmarks } from "~/composables/useBookmarks"
+
 const appState = useAppState()
 
+// ==========================================
+// PROPS FROM PARENT
+// ==========================================
+
+const props = defineProps({
+  currentQuestion: {
+    type: Object,
+    default: () => ({}),
+  },
+
+  questionNumber: {
+    type: Number,
+    default: 0,
+  },
+})
+
+// ==========================================
+// EVENTS
+// ==========================================
+
 const emit = defineEmits(["timeFinished"])
-const formattedTime = ref("01:59:37")
+
+// ==========================================
+// STATE
+// ==========================================
+
 const logoutNotice = ref(false)
 const showCalculator = ref(false)
-const auth = useExamTipsAuth();
+
+const showBookmarkModal = ref(false)
+const bookmarkedQuestion = ref({})
+const bookmarkSaving = ref(false)
+const bookmarkError = ref("")
+
+const timer = ref(null)
+
+// ==========================================
+// AUTHENTICATION
+// ==========================================
+
+const auth = useExamTipsAuth()
+
 const currentUser = computed(() => {
   return auth.user?.value || auth.user || {}
 })
-const timer = ref(null)
+
+// ==========================================
+// EXAM DURATION
+// ==========================================
 
 const examDuration = computed(() => {
   const duration = appState.value?.examSettings?.duration
 
-  if (!duration) return 3600
+  if (!duration) {
+    return 3600
+  }
 
   if (typeof duration === "number") {
     return duration
   }
 
-  const [hours, minutes, seconds] = duration
-    .split(":")
-    .map(Number)
+  if (typeof duration === "string") {
+    const parts = duration.split(":").map(Number)
 
-  return (
-    (hours || 0) * 3600 +
-    (minutes || 0) * 60 +
-    (seconds || 0)
-  )
+    // HH:MM:SS
+    if (parts.length === 3) {
+      const [hours, minutes, seconds] = parts
+
+      return (
+        (hours || 0) * 3600 +
+        (minutes || 0) * 60 +
+        (seconds || 0)
+      )
+    }
+
+    // MM:SS
+    if (parts.length === 2) {
+      const [minutes, seconds] = parts
+
+      return (minutes || 0) * 60 + (seconds || 0)
+    }
+
+    // Seconds
+    if (
+      parts.length === 1 &&
+      !Number.isNaN(parts[0])
+    ) {
+      return parts[0]
+    }
+  }
+
+  return 3600
 })
 
 // ==========================================
-// ACTIONS
+// LOGOUT
 // ==========================================
 
 const logout = async () => {
-  console.log(
-    appState.value.selectedSubjects,
-    "before click"
-  )
-
-  await navigateTo("/")
-  logoutNotice.value = false
+  try {
+    logoutNotice.value = false
+    await navigateTo("/")
+  } catch (error) {
+    console.error("Failed to leave exam:", error)
+  }
 }
+
+// ==========================================
+// CALCULATOR
+// ==========================================
 
 const openCalculator = () => {
   showCalculator.value = !showCalculator.value
 }
 
-const toggleBookmark = () => {
-  console.log("Bookmark question")
+// ==========================================
+// BOOKMARK
+// ==========================================
+
+const { saveBookmark } = useBookmarks()
+
+const openBookmark = async () => {
+  const question = props.currentQuestion
+
+  if (
+    !question ||
+    Object.keys(question).length === 0
+  ) {
+    bookmarkError.value =
+      "No question is currently selected."
+
+    return
+  }
+
+  if (bookmarkSaving.value) {
+    return
+  }
+
+  bookmarkSaving.value = true
+  bookmarkError.value = ""
+
+  try {
+    const questionToSave = {
+      ...question,
+
+      questionNumber:
+        props.questionNumber ||
+        question.questionNumber ||
+        question.number ||
+        null,
+    }
+
+    await saveBookmark(questionToSave)
+
+    bookmarkedQuestion.value = {
+      ...questionToSave,
+    }
+
+    showBookmarkModal.value = true
+  } catch (error) {
+    console.error(
+      "Failed to save bookmark:",
+      error,
+    )
+
+    bookmarkError.value =
+      error?.message ||
+      "Unable to save this question."
+
+    // Automatically clear the error
+    setTimeout(() => {
+      bookmarkError.value = ""
+    }, 4000)
+  } finally {
+    bookmarkSaving.value = false
+  }
 }
+
+const closeBookmarkModal = () => {
+  showBookmarkModal.value = false
+}
+
+// ==========================================
+// OTHER TOOLS
+// ==========================================
 
 const reportError = () => {
   console.log("Report error")
@@ -226,9 +444,12 @@ const openAiTutor = () => {
   console.log("Open AI Tutor")
 }
 
+// ==========================================
+// TIMER
+// ==========================================
+
 const timeFinished = () => {
-  // The parent exam.vue will handle submission
-  console.log("Exam time finished")
+  emit("timeFinished")
 }
 
 const ticking = (seconds) => {
@@ -236,37 +457,44 @@ const ticking = (seconds) => {
 }
 
 // ==========================================
-// TOOLBAR
+// EXAM TOOLS
 // ==========================================
 
 const examTools = [
   {
     label: "Log Out",
     icon: "lucide:log-out",
+
     onClick: () => {
       logoutNotice.value = true
     },
   },
+
   {
     label: "Calculator",
     icon: "lucide:calculator",
     onClick: openCalculator,
   },
+
   {
     label: "Bookmark",
     icon: "lucide:bookmark",
-    onClick: toggleBookmark,
+    onClick: openBookmark,
   },
-  // {
-  //   label: "Report Error",
-  //   icon: "lucide:triangle-alert",
-  //   onClick: reportError,
-  // },
+
   {
     label: "Dictionary",
     icon: "lucide:book-open",
     onClick: openDictionary,
   },
+
+  // Uncomment when needed
+  // {
+  //   label: "Report Error",
+  //   icon: "lucide:triangle-alert",
+  //   onClick: reportError,
+  // },
+
   // {
   //   label: "AI Tutor",
   //   icon: "lucide:bot",
@@ -274,14 +502,23 @@ const examTools = [
   // },
 ]
 
-// Expose timer methods to exam.vue
+// ==========================================
+// EXPOSE TIMER METHODS
+// ==========================================
+
 defineExpose({
   timer,
+
   start: () => timer.value?.start(),
+
   stop: () => timer.value?.stop(),
+
   pause: () => timer.value?.pause(),
+
   resume: () => timer.value?.resume(),
+
   reset: (seconds) => timer.value?.reset(seconds),
+
   getTimeLeft: () => timer.value?.timeLeft || 0,
 })
 </script>
@@ -290,12 +527,52 @@ defineExpose({
 @reference "tailwindcss";
 
 .exam-tool-button {
-  @apply  flex h-11 items-center gap-2 rounded-lg px-3
-         text-sm font-semibold text-white/90
-         transition-all duration-200
-         hover:bg-white/10 hover:text-white
-         active:scale-95;
+  @apply flex h-11 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-white/90 transition-all duration-200 hover:bg-white/10 hover:text-white active:scale-95 sm:px-3;
 }
 
+/* Bookmark error animation */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
 
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* Leave exam modal animation */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+
+.modal-enter-active section,
+.modal-leave-active section {
+  transition:
+    transform 0.2s ease,
+    opacity 0.2s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-enter-from section,
+.modal-leave-to section {
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-enter-active,
+  .fade-leave-active,
+  .modal-enter-active,
+  .modal-leave-active,
+  .modal-enter-active section,
+  .modal-leave-active section {
+    transition: none;
+  }
+}
 </style>
