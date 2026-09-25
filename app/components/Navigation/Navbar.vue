@@ -230,12 +230,12 @@ const handleMenuClick = (item: any) => {
 }
 </script>
 <template>
-  <!-- ========================================= -->
+  <div>  <!-- ========================================= -->
   <!-- MOBILE DRAWER -->
   <!-- ========================================= -->
 
   <div
-    class="fixed inset-0 z-[100] md:hidden"
+    class="fixed  inset-0 z-[100] md:hidden"
     :class="
       mobileMenuOpen || isDragging
         ? 'visible'
@@ -344,7 +344,7 @@ const handleMenuClick = (item: any) => {
   <!-- ========================================= -->
 <div>
   <header
-    class="fixed inset-x-0 top-0 z-50 w-full bg-[#071936] text-white shadow-lg"
+    class="fixed  inset-x-0 top-0 z-50 w-full bg-[#071936] text-white shadow-lg"
   >
     <!-- TOP MENU - DESKTOP ONLY -->
     <div
@@ -487,6 +487,7 @@ const handleMenuClick = (item: any) => {
     </div>
   </header>
 
+</div>
 </div>
 </template>
 

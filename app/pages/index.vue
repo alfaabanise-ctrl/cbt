@@ -1,50 +1,69 @@
 <template>
-  <!-- PAGE BACKGROUND -->
-
   <div
-    class="page-background"
+    class="flex  pt-10 min-h-dvh w-full max-w-full overflow-x-hidden bg-cover bg-center bg-fixed"
     style="background-image: url('/image/background.png')"
   >
-  <NavigationNavbar 
-   @dictionary="openBook({ component: 'DICTIONARY' })" 
-     @bookmarks="openBook({ component: 'BOOKMARKS' })"
-      @leaderboard="openBook({ component: 'LEADERBOARD' })" 
-   />
+    <!-- NAVIGATION -->
+    <NavigationNavbar
+      @dictionary="openBook({ component: 'DICTIONARY' })"
+      @bookmarks="openBook({ component: 'BOOKMARKS' })"
+      @leaderboard="openBook({ component: 'LEADERBOARD' })"
+    />
+
     <!-- BACKGROUND OVERLAY -->
-    <div class="page-overlay  mt-20 sm:mt-10 pt-28">
-      
+    <div
+      class="flex min-h-dvh w-full max-w-full items-center justify-center overflow-x-hidden bg-black/10 p-2 sm:p-4"
+    >
       <!-- MAIN BOOK CONTAINER -->
-      <main class="book">
-        <!-- ================= HOME PAGE ================= -->
+      <main
+        class="relative h-[calc(100dvh-1rem)] w-full max-w-full overflow-hidden rounded-xl shadow-[0_20px_45px_rgba(0,0,0,0.18)] [perspective:1800px] sm:mt-6 sm:h-[85vh] sm:max-w-[70%] md:h-[80vh] lg:h-[75vh]"
+      >
+        <!-- ====================================================== -->
+        <!-- HOME PAGE -->
+        <!-- ====================================================== -->
         <section
-          :class="{ open: appState.showSecond }"
-          class="page home"
+          :class="[
+            'absolute inset-0 z-20 flex w-full max-w-full min-w-0 flex-col overflow-x-hidden overflow-y-auto bg-transparent p-2 transition-all duration-900 ease-in-out [transform-style:preserve-3d] [transform-origin:left_center]',
+            appState.showSecond
+              ? 'rotate-y-[-110deg] opacity-0'
+              : 'rotate-y-0 opacity-100',
+          ]"
         >
-          <!-- TOP ACTIVATION BAR -->
-          <section class="activation-bar">
+          <!-- ================================================== -->
+          <!-- ACTIVATION BAR -->
+          <!-- ================================================== -->
+          <section
+            class="mt-1 flex w-full max-w-full min-w-0 shrink-0 items-center justify-between gap-2 rounded-xl bg-white/35 p-2 shadow-[0_2px_8px_rgba(0,0,0,0.05)] backdrop-blur-[8px] sm:mt-2 sm:px-5 sm:py-3"
+          >
             <!-- Welcome -->
-            <div class="welcome-section">
-              <div class="welcome-icon">
+            <div class="flex min-w-0 items-center gap-2">
+              <div
+                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white sm:h-10 sm:w-10"
+              >
                 <Icon
                   name="lucide:triangle-alert"
                   class="h-4 w-4 sm:h-5 sm:w-5"
                 />
               </div>
 
-              <span class="welcome-text">
-                Welcome to your learning journey  
+              <span
+                class="overflow-hidden text-ellipsis whitespace-nowrap text-[9px] font-semibold text-green-700 sm:text-[13px]"
+              >
+                Welcome to your learning journey
               </span>
             </div>
 
-            <!-- Activation Buttons -->
-            <div class="activation-actions">
-              <span class="premium-label">
+            <!-- Activation -->
+            <div class="flex min-w-0 shrink-0 items-center gap-1">
+              <span
+                class="hidden rounded-lg bg-yellow-400 px-3 py-2 text-center text-[11px] font-bold text-gray-900 md:block"
+              >
                 Unlock Premium Learning
               </span>
 
               <button
                 type="button"
-                class="activate-button"
+                class="rounded-full bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors duration-200 hover:bg-orange-600 sm:px-3 sm:py-2 sm:text-xs"
                 @click="openBook({ component: 'ACTIVATEPRODUCT' })"
               >
                 Activate
@@ -52,57 +71,86 @@
             </div>
           </section>
 
-          <!-- ================= MAIN DASHBOARD ================= -->
-          <section class="dashboard">
+          <!-- ================================================== -->
+          <!-- DASHBOARD -->
+          <!-- ================================================== -->
+          <section
+            class="mt-2 flex min-h-0 w-full max-w-full flex-1 flex-col gap-2 overflow-hidden sm:mt-3 sm:grid sm:grid-cols-1 sm:gap-3 md:grid-cols-2"
+          >
+            <!-- ================================================== -->
             <!-- FEATURE CARDS -->
-            <div class="feature-cards">
+            <!-- ================================================== -->
+            <div
+              class="order-2 grid min-h-0 w-full max-w-full min-w-0 grid-cols-2 grid-rows-3 gap-2 sm:gap-3 md:order-1"
+            >
               <button
                 v-for="item in dashboardItems"
                 :key="item.title"
                 type="button"
-                class="feature-card group"
-                :class="item.class"
+                :class="[
+                  'group flex min-h-0 min-w-0 flex-col items-center justify-center overflow-hidden rounded-[0.65rem] p-1.5 text-center transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_18px_rgba(0,0,0,0.1)] sm:rounded-xl sm:p-3',
+                  item.class,
+                ]"
                 @click="openBook(item)"
               >
                 <Icon
                   :name="item.icon"
-                  class="feature-icon transition-transform duration-200 group-hover:scale-110"
+                  class="mb-1 h-7 w-7 shrink-0 transition-transform duration-200 group-hover:scale-110 sm:mb-2 sm:h-9 sm:w-9"
                 />
 
-                <h2 class="feature-title">
+                <h2
+                  class="text-[9px] font-extrabold leading-tight sm:text-sm"
+                >
                   {{ item.title }}
                 </h2>
 
-                <p class="feature-description">
+                <p
+                  class="mt-1 line-clamp-2 overflow-hidden text-[8px] leading-tight opacity-70 sm:text-[11px]"
+                >
                   {{ item.description }}
                 </p>
               </button>
             </div>
 
+            <!-- ================================================== -->
             <!-- CAROUSEL -->
-            <div class="carousel-wrapper">
-              <!-- Desktop and Tablet Carousel -->
-              <div class="desktop-carousel">
+            <!-- ================================================== -->
+            <div
+              class="order-1 min-h-[120px] w-full max-w-full min-w-0 overflow-hidden rounded-xl bg-slate-950 sm:min-h-[160px] md:order-2 md:h-full md:min-h-0"
+            >
+              <!-- Desktop / Tablet -->
+              <div
+                class="hidden h-full w-full max-w-full min-w-0 overflow-hidden md:block"
+              >
                 <UiCarousel />
               </div>
 
-              <!-- Mobile Carousel -->
-              <div class="mobile-carousel">
+              <!-- Mobile -->
+              <div
+                class="block h-[160px] w-full max-w-full min-w-0 overflow-hidden md:hidden"
+              >
                 <UiCarousel2 />
               </div>
             </div>
           </section>
 
-          <!-- ================= QUICK ACCESS ================= -->
-          <section class="quick-access">
+          <!-- ================================================== -->
+          <!-- QUICK ACCESS -->
+          <!-- ================================================== -->
+          <section
+            class="mt-2 hidden w-full max-w-full shrink-0 grid-cols-4 gap-2 pb-1 md:grid"
+          >
             <div
               v-for="item in quickAccess"
               :key="item.to"
-              class="quick-access-item"
+              class="flex min-w-0 items-center gap-2 rounded-lg bg-amber-50 p-2 shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
             >
               <Icon
                 :name="item.icon"
-                :class="['h-6 w-6 shrink-0', item.iconClass]"
+                :class="[
+                  'h-6 w-6 shrink-0',
+                  item.iconClass,
+                ]"
               />
 
               <div class="min-w-0">
@@ -118,23 +166,29 @@
           </section>
         </section>
 
-        <!-- ================= SECOND PAGE ================= -->
+        <!-- ====================================================== -->
+        <!-- SECOND PAGE -->
+        <!-- ====================================================== -->
         <section
-          :class="{ active: appState.showSecond }"
-          class="page  second"
+          :class="[
+            'absolute inset-0 z-10 w-full max-w-full min-w-0 overflow-x-hidden overflow-y-auto bg-transparent transition-all duration-900 ease-in-out',
+            appState.showSecond
+              ? 'translate-x-0 opacity-100'
+              : 'translate-x-20 opacity-0',
+          ]"
         >
           <!-- UTME -->
           <div
             v-if="appState.currentPage === 'UTME'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <PracticeUTME @gohome="closeBook" />
           </div>
 
-          <!-- DICTIONARY / WAEC -->
+          <!-- DICTIONARY -->
           <div
             v-else-if="appState.currentPage === 'DICTIONARY'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <DictionarySearch @gohome="closeBook" />
           </div>
@@ -142,7 +196,7 @@
           <!-- RESULTS -->
           <div
             v-else-if="appState.currentPage === 'RESULTS'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <ResultHistory @gohome="closeBook" />
           </div>
@@ -150,7 +204,7 @@
           <!-- ACTIVATION -->
           <div
             v-else-if="appState.currentPage === 'ACTIVATEPRODUCT'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <ActivateProduct @gohome="closeBook" />
           </div>
@@ -158,15 +212,17 @@
           <!-- LESSON -->
           <div
             v-else-if="appState.currentPage === 'LESSON'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
-            <!-- <lessonViewer @gohome="closeBook" /> -->
+            <!--
+            <lessonViewer @gohome="closeBook" />
+            -->
           </div>
 
           <!-- QUESTION SEARCH -->
           <div
             v-else-if="appState.currentPage === 'QuestionSearch'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <QuestionSearch @gohome="closeBook" />
           </div>
@@ -174,19 +230,23 @@
           <!-- CLASSROOM -->
           <div
             v-else-if="appState.currentPage === 'CLASS'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <Classroom @gohome="closeBook" />
           </div>
-           <div
+
+          <!-- LEADERBOARD -->
+          <div
             v-else-if="appState.currentPage === 'LEADERBOARD'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <Leaderboard @gohome="closeBook" />
           </div>
-           <div
+
+          <!-- BOOKMARKS -->
+          <div
             v-else-if="appState.currentPage === 'BOOKMARKS'"
-            class="page-content"
+            class="min-h-full w-full max-w-full min-w-0 overflow-x-hidden"
           >
             <Bookmarks @gohome="closeBook" />
           </div>
@@ -196,24 +256,23 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from "vue";
+<script setup lang="ts">
+import { ref, computed } from "vue"
 
-// definePageMeta({
-//   layout: "main",
-// });
+// ============================================================
+// APP STATE
+// ============================================================
 
-const appState = useAppState();
-const auth = useExamTipsAuth();
+const appState = useAppState()
+const auth = useExamTipsAuth()
 
 const currentUser = computed(() => {
   return auth.user?.value || auth.user || {}
 })
-/*
-|--------------------------------------------------------------------------
-| Dashboard Items
-|--------------------------------------------------------------------------
-*/
+
+// ============================================================
+// DASHBOARD ITEMS
+// ============================================================
 
 const dashboardItems = [
   {
@@ -224,7 +283,8 @@ const dashboardItems = [
     route: "/practice/utme",
     component: "UTME",
   },
-   {
+
+  {
     title: "Classroom",
     description: "Learn from expert teachers",
     icon: "lucide:school",
@@ -232,14 +292,15 @@ const dashboardItems = [
     route: "/classroom",
     component: "CLASS",
   },
-{
-  title: "Dictionary",
-  description: "Discover meanings, synonyms and new words",
-  icon: "lucide:book-open",
-  class: "bg-pink-100 text-pink-900",
-  route: "/dictionary",
-  component: "DICTIONARY",
-},
+
+  {
+    title: "Dictionary",
+    description: "Discover meanings, synonyms and new words",
+    icon: "lucide:book-open",
+    class: "bg-pink-100 text-pink-900",
+    route: "/dictionary",
+    component: "DICTIONARY",
+  },
 
   {
     title: "Result History",
@@ -249,7 +310,7 @@ const dashboardItems = [
     route: "/results-history",
     component: "RESULTS",
   },
- 
+
   {
     title: "Question Bank",
     description: "Discover courses and teachers",
@@ -258,29 +319,20 @@ const dashboardItems = [
     route: "/marketplace",
     component: "QuestionSearch",
   },
-  {
-  title: "Leaderboard",
-  description: "Discover meanings, synonyms and new words",
-  icon: "lucide:book-open",
-  class: "bg-pink-100 text-pink-900",
-  route: "/dictionary",
-  component: "LEADERBOARD",
-},
-  // {
-  //   title: "Past Questions",
-  //   description: "Practice previous exam questions",
-  //   icon: "lucide:file-question",
-  //   class: "bg-orange-100 text-orange-900",
-  //   route: "/past-questions",
-  //   component: "QuestionSearch",
-  // },
-];
 
-/*
-|--------------------------------------------------------------------------
-| Carousel Slides
-|--------------------------------------------------------------------------
-*/
+  {
+    title: "Leaderboard",
+    description: "See top students",
+    icon: "lucide:trophy",
+    class: "bg-pink-100 text-pink-900",
+    route: "/leaderboard",
+    component: "LEADERBOARD",
+  },
+]
+
+// ============================================================
+// CAROUSEL SLIDES
+// ============================================================
 
 const slides = [
   {
@@ -290,6 +342,7 @@ const slides = [
     button: "Start Practicing",
     image: "/image/student.jpg",
   },
+
   {
     title: "Learn from Expert Teachers",
     description:
@@ -297,6 +350,7 @@ const slides = [
     button: "Explore Marketplace",
     image: "/image/teacher.jpg",
   },
+
   {
     title: "Your Exam Success Starts Here",
     description:
@@ -304,15 +358,13 @@ const slides = [
     button: "Explore Exams",
     image: "/image/exam.jpg",
   },
-];
+]
 
-const currentSlide = ref(0);
+const currentSlide = ref(0)
 
-/*
-|--------------------------------------------------------------------------
-| Quick Access
-|--------------------------------------------------------------------------
-*/
+// ============================================================
+// QUICK ACCESS
+// ============================================================
 
 const quickAccess = [
   {
@@ -322,6 +374,7 @@ const quickAccess = [
     title: "Performance",
     description: "Track your progress",
   },
+
   {
     to: "/leaderboard",
     icon: "lucide:trophy",
@@ -329,6 +382,7 @@ const quickAccess = [
     title: "Leaderboard",
     description: "See top students",
   },
+
   {
     to: "/quizzes",
     icon: "lucide:brain",
@@ -336,6 +390,7 @@ const quickAccess = [
     title: "Quizzes",
     description: "Test your knowledge",
   },
+
   {
     to: "/teachers",
     icon: "lucide:users",
@@ -343,530 +398,38 @@ const quickAccess = [
     title: "Teachers",
     description: "Find expert teachers",
   },
-];
+]
 
-/*
-|--------------------------------------------------------------------------
-| Carousel Controls
-|--------------------------------------------------------------------------
-*/
+// ============================================================
+// CAROUSEL CONTROLS
+// ============================================================
 
 const nextSlide = () => {
   currentSlide.value =
-    (currentSlide.value + 1) % slides.length;
-};
+    (currentSlide.value + 1) % slides.length
+}
 
 const previousSlide = () => {
   currentSlide.value =
-    (currentSlide.value - 1 + slides.length) % slides.length;
-};
+    (currentSlide.value - 1 + slides.length) % slides.length
+}
 
-/*
-|--------------------------------------------------------------------------
-| Open Page
-|--------------------------------------------------------------------------
-*/
+// ============================================================
+// OPEN PAGE
+// ============================================================
 
-const openBook = (item) => {
-  if (!item?.component) return;
+const openBook = (item: any) => {
+  if (!item?.component) return
 
-  appState.value.currentPage = item.component;
-  appState.value.showSecond = true;
-};
+  appState.value.currentPage = item.component
+  appState.value.showSecond = true
+}
 
-/*
-|--------------------------------------------------------------------------
-| Close Page
-|--------------------------------------------------------------------------
-*/
+// ============================================================
+// CLOSE PAGE
+// ============================================================
 
 const closeBook = () => {
-  appState.value.showSecond = false;
-};
+  appState.value.showSecond = false
+}
 </script>
-
-<style scoped>
-/*
-|--------------------------------------------------------------------------
-| PAGE BACKGROUND
-|--------------------------------------------------------------------------
-*/
-
-.page-background {
-  display: flex;
-  min-height: 100dvh;
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-  background-position: center;
-  background-size: cover;
-  background-attachment: fixed;
-}
-
-.page-overlay {
-  display: flex;
-  min-height: 100dvh;
-  width: 100%;
-  max-width: 100%;
-  align-items: center;
-  justify-content: center;
-  overflow-x: hidden;
-  background: rgb(0 0 0 / 10%);
-  padding: 0.5rem;
-}
-
-/*
-|--------------------------------------------------------------------------
-| BOOK CONTAINER
-|--------------------------------------------------------------------------
-*/
-
-.book {
-  position: relative;
-  width: 100%;
-  max-width: 100%;
-  height: calc(100dvh - 1rem);
-  overflow: hidden;
-  border-radius: 0.75rem;
-  perspective: 1800px;
-  box-shadow:
-    0 20px 45px rgb(0 0 0 / 18%);
-}
-
-/*
-|--------------------------------------------------------------------------
-| PAGE STRUCTURE
-|--------------------------------------------------------------------------
-*/
-
-.page {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-  transition:
-    transform 900ms ease,
-    opacity 900ms ease;
-  transform-style: preserve-3d;
-}
-
-/*
-|--------------------------------------------------------------------------
-| HOME PAGE
-|--------------------------------------------------------------------------
-*/
-
-.home {
-  z-index: 2;
-  display: flex;
-  flex-direction: column;
-  transform-origin: left center;
-  background: transparent;
-  overflow-x: hidden;
-  overflow-y: auto;
-  padding: 0.5rem;
-}
-
-.home.open {
-  transform: rotateY(-110deg);
-  opacity: 0;
-}
-
-/*
-|--------------------------------------------------------------------------
-| ACTIVATION BAR
-|--------------------------------------------------------------------------
-*/
-
-.activation-bar {
-  display: flex;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-  padding: 0.5rem;
-  border-radius: 0.75rem;
-  background: rgb(255 255 255 / 35%);
-  box-shadow: 0 2px 8px rgb(0 0 0 / 5%);
-  backdrop-filter: blur(8px);
-}
-
-.welcome-section {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.welcome-icon {
-  display: flex;
-  height: 2rem;
-  width: 2rem;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  border-radius: 9999px;
-  background: #facc15;
-  color: white;
-}
-
-.welcome-text {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #15803d;
-  font-size: 9px;
-  font-weight: 600;
-}
-
-.activation-actions {
-  display: flex;
-  min-width: 0;
-  flex-shrink: 0;
-  align-items: center;
-  gap: 0.35rem;
-}
-
-.premium-label {
-  display: none;
-  border-radius: 0.5rem;
-  background: #facc15;
-  padding: 0.5rem 0.75rem;
-  color: #111827;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.activate-button {
-  border-radius: 9999px;
-  background: #f97316;
-  padding: 0.35rem 0.65rem;
-  color: white;
-  font-size: 10px;
-  font-weight: 700;
-  transition: background 200ms ease;
-}
-
-.activate-button:hover {
-  background: #ea580c;
-}
-
-/*
-|--------------------------------------------------------------------------
-| DASHBOARD
-|--------------------------------------------------------------------------
-*/
-
-.dashboard {
-  display: flex;
-  min-height: 0;
-  width: 100%;
-  max-width: 100%;
-  flex: 1;
-  flex-direction: column;
-  gap: 0.5rem;
-  overflow: hidden;
-  margin-top: 0.5rem;
-}
-
-/*
-|--------------------------------------------------------------------------
-| FEATURE CARDS
-|--------------------------------------------------------------------------
-*/
-
-.feature-cards {
-  order: 2;
-  display: grid;
-  min-height: 0;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: repeat(3, minmax(0, 1fr));
-  gap: 0.5rem;
-}
-
-.feature-card {
-  display: flex;
-  min-height: 0;
-  min-width: 0;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: 0.65rem;
-  padding: 0.4rem;
-  text-align: center;
-  transition:
-    transform 200ms ease,
-    box-shadow 200ms ease;
-}
-
-.feature-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgb(0 0 0 / 10%);
-}
-
-.feature-icon {
-  height: 1.65rem;
-  width: 1.65rem;
-  flex-shrink: 0;
-  margin-bottom: 0.25rem;
-}
-
-.feature-title {
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1.2;
-}
-
-.feature-description {
-  display: -webkit-box;
-  overflow: hidden;
-  margin-top: 0.25rem;
-  font-size: 8px;
-  line-height: 1.25;
-  opacity: 0.7;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-/*
-|--------------------------------------------------------------------------
-| CAROUSEL
-|--------------------------------------------------------------------------
-*/
-
-.carousel-wrapper {
-  order: 1;
-  min-height: 120px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  border-radius: 0.75rem;
-  background: #020617;
-}
-
-.desktop-carousel {
-  display: none;
-  height: 100%;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.mobile-carousel {
-  display: block;
-  height: 160px;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-}
-
-/*
-|--------------------------------------------------------------------------
-| QUICK ACCESS
-|--------------------------------------------------------------------------
-*/
-
-.quick-access {
-  display: none;
-  width: 100%;
-  max-width: 100%;
-  flex-shrink: 0;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
-  padding-bottom: 0.25rem;
-  margin-top: 0.5rem;
-}
-
-.quick-access-item {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-  gap: 0.5rem;
-  border-radius: 0.5rem;
-  background: #fffbeb;
-  padding: 0.5rem;
-  box-shadow: 0 2px 6px rgb(0 0 0 / 5%);
-}
-
-/*
-|--------------------------------------------------------------------------
-| SECOND PAGE
-|--------------------------------------------------------------------------
-*/
-
-.second {
-  z-index: 1;
-  opacity: 0;
-  transform: translateX(80px);
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: transparent;
-}
-
-.second.active {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.page-content {
-  min-height: 100%;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  overflow-x: hidden;
-}
-
-/*
-|--------------------------------------------------------------------------
-| TABLET AND DESKTOP
-|--------------------------------------------------------------------------
-*/
-
-@media (min-width: 640px) {
-  .page-overlay {
-    padding: 1rem;
-  }
-
-  .book {
-    height: 85vh;
-    max-width: 70%;
-    margin-top: 1.5rem;
-  }
-
-  .home {
-    padding: 0.75rem 1rem;
-  }
-
-  .activation-bar {
-    margin-top: 0.5rem;
-    padding: 0.75rem 1.25rem;
-  }
-
-  .welcome-icon {
-    height: 2.5rem;
-    width: 2.5rem;
-  }
-
-  .welcome-text {
-    font-size: 13px;
-  }
-
-  .activate-button {
-    padding: 0.5rem 0.75rem;
-    font-size: 12px;
-  }
-
-  .dashboard {
-    display: grid;
-    grid-template-columns: repeat(1, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-top: 0.75rem;
-  }
-
-  .feature-cards {
-    gap: 0.75rem;
-  }
-
-  .feature-card {
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-  }
-
-  .feature-icon {
-    height: 2.25rem;
-    width: 2.25rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .feature-title {
-    font-size: 14px;
-  }
-
-  .feature-description {
-    font-size: 11px;
-  }
-
-  .carousel-wrapper {
-    min-height: 160px;
-  }
-
-  .mobile-carousel {
-    height: 160px;
-  }
-}
-
-@media (min-width: 768px) {
-  .premium-label {
-    display: block;
-  }
-
-  .book {
-    height: 80vh;
-  }
-
-  .dashboard {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .feature-cards {
-    order: 1;
-  }
-
-  .carousel-wrapper {
-    order: 2;
-    height: 100%;
-    min-height: 0;
-  }
-
-  .desktop-carousel {
-    display: block;
-  }
-
-  .mobile-carousel {
-    display: none;
-  }
-
-  .quick-access {
-    display: grid;
-  }
-}
-
-@media (min-width: 1024px) {
-  .book {
-    height: 75vh;
-    max-width: 70%;
-  }
-}
-
-/*
-|--------------------------------------------------------------------------
-| Extra Overflow Protection
-|--------------------------------------------------------------------------
-*/
-
-:deep(*) {
-  box-sizing: border-box;
-  max-width: 100%;
-}
-
-:deep(img),
-:deep(video),
-:deep(canvas),
-:deep(iframe) {
-  max-width: 100%;
-}
-</style>

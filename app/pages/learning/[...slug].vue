@@ -1,8 +1,12 @@
+
 <template>
   <div
     class="flex h-full min-h-0 flex-col overflow-hidden bg-white font-['Inter',system-ui,sans-serif] text-slate-800"
   >
+    <!-- ========================================================= -->
     <!-- TOP BAR -->
+    <!-- ========================================================= -->
+
     <header
       class="z-40 flex h-14 shrink-0 items-center gap-2 border-b border-slate-200 bg-navy px-3 text-white sm:gap-3 sm:px-6"
     >
@@ -16,7 +20,7 @@
         <Icon name="lucide:menu" class="h-5 w-5" />
       </button>
 
-      <!-- BACK BUTTON -->
+      <!-- BACK -->
       <button
         type="button"
         aria-label="Go home"
@@ -26,12 +30,14 @@
         <Icon name="lucide:arrow-left" class="h-5 w-5" />
       </button>
 
-      <!-- PAGE TITLE -->
+      <!-- TITLE -->
       <div class="min-w-0 flex-1">
         <p class="truncate text-[10px] uppercase tracking-widest text-white/60">
           {{ breadcrumbSubject || "Learning" }}
 
-          <span v-if="breadcrumbTopic"> / {{ breadcrumbTopic }} </span>
+          <span v-if="breadcrumbTopic">
+            / {{ breadcrumbTopic }}
+          </span>
         </p>
 
         <h1 class="truncate text-sm font-semibold sm:text-base">
@@ -39,7 +45,7 @@
         </h1>
       </div>
 
-      <!-- SEARCH -->
+      <!-- GLOBAL SEARCH -->
       <div class="relative hidden sm:block">
         <Icon
           name="lucide:search"
@@ -56,7 +62,10 @@
       </div>
     </header>
 
+    <!-- ========================================================= -->
     <!-- MOBILE SEARCH -->
+    <!-- ========================================================= -->
+
     <div class="shrink-0 border-b border-slate-200 bg-white p-3 sm:hidden">
       <div class="relative">
         <Icon
@@ -74,13 +83,17 @@
       </div>
     </div>
 
-    <!-- SUBJECT PROGRESS BAR -->
+    <!-- SUBJECT PROGRESS -->
     <div class="h-1 w-full shrink-0 bg-slate-100">
       <div
         class="h-full bg-gold transition-all duration-300"
         :style="{ width: `${progressPercent}%` }"
       ></div>
     </div>
+
+    <!-- ========================================================= -->
+    <!-- BODY -->
+    <!-- ========================================================= -->
 
     <div class="relative flex min-h-0 flex-1">
       <!-- MOBILE OVERLAY -->
@@ -90,7 +103,10 @@
         @click="sidebarOpen = false"
       ></div>
 
+      <!-- ======================================================= -->
       <!-- SIDEBAR -->
+      <!-- ======================================================= -->
+
       <aside
         class="z-30 w-[min(84vw,288px)] shrink-0 overflow-y-auto border-r border-slate-200 bg-slate-50 lg:relative lg:block lg:w-72"
         :class="
@@ -99,7 +115,7 @@
             : 'hidden'
         "
       >
-        <!-- SELECTED SUBJECT HEADER -->
+        <!-- SELECTED SUBJECT -->
         <div class="border-b border-slate-200 bg-white px-4 py-4">
           <p
             class="text-[10px] font-bold uppercase tracking-widest text-slate-400"
@@ -128,7 +144,9 @@
           <!-- SUBJECT PROGRESS -->
           <div class="mt-4">
             <div class="mb-1 flex items-center justify-between">
-              <span class="text-[11px] text-slate-400"> Reading progress </span>
+              <span class="text-[11px] text-slate-400">
+                Reading progress
+              </span>
 
               <span class="text-[11px] font-bold text-navy">
                 {{ progressPercent }}%
@@ -144,8 +162,63 @@
           </div>
         </div>
 
-        <!-- SUBJECT TOPICS -->
+        <!-- ===================================================== -->
+        <!-- SELECTED TOPIC HEADER -->
+        <!-- ===================================================== -->
+
+        <div
+          v-if="selectedTopic"
+          class="border-b border-slate-200 bg-white px-4 py-3"
+        >
+          <button
+            type="button"
+            class="mb-3 flex items-center gap-1.5 text-[11px] font-semibold text-slate-400 transition hover:text-navy"
+            @click="clearSelectedTopic"
+          >
+            <Icon name="lucide:arrow-left" class="h-3.5 w-3.5" />
+            All topics
+          </button>
+
+          <div class="flex items-center gap-2">
+            <div
+              class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-gold/10 text-gold"
+            >
+              <Icon name="lucide:folder-open" class="h-4 w-4" />
+            </div>
+
+            <div class="min-w-0">
+              <p class="truncate text-xs font-bold text-navy">
+                {{ selectedTopic.title }}
+              </p>
+
+              <p class="text-[10px] text-slate-400">
+                {{ selectedTopicLessons.length }} lessons
+              </p>
+            </div>
+          </div>
+
+          <!-- TOPIC SEARCH -->
+          <div class="relative mt-3">
+            <Icon
+              name="lucide:search"
+              class="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400"
+            />
+
+            <input
+              v-model="topicSearchTerm"
+              type="text"
+              placeholder="Search lessons in this topic..."
+              class="w-full rounded-lg border border-slate-200 bg-slate-50 py-2 pl-8 pr-3 text-xs text-slate-700 outline-none transition focus:border-navy focus:bg-white"
+            />
+          </div>
+        </div>
+
+        <!-- ===================================================== -->
+        <!-- TOPICS -->
+        <!-- ===================================================== -->
+
         <div class="py-3">
+          <!-- NO TOPICS -->
           <div
             v-if="!selectedSubjectTopics.length"
             class="px-4 py-8 text-center"
@@ -160,20 +233,39 @@
             </p>
           </div>
 
+          <!-- TOPIC LIST -->
           <div
             v-for="topic in selectedSubjectTopics"
             :key="topic.id"
-            class="mb-4"
+            class="mb-2"
           >
             <!-- TOPIC HEADER -->
-            <div class="flex items-center gap-2 px-4 py-2">
+            <button
+              type="button"
+              class="flex w-full items-center gap-2 px-4 py-2 text-left transition hover:bg-white"
+              :class="
+                String(selectedTopicId) === String(topic.id)
+                  ? 'bg-white'
+                  : ''
+              "
+              @click="selectTopic(topic)"
+            >
               <Icon
-                name="lucide:folder-open"
+                :name="
+                  String(selectedTopicId) === String(topic.id)
+                    ? 'lucide:folder-open'
+                    : 'lucide:folder'
+                "
                 class="h-4 w-4 shrink-0 text-gold"
               />
 
               <p
-                class="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-wide text-slate-500"
+                class="min-w-0 flex-1 truncate text-[11px] font-bold uppercase tracking-wide"
+                :class="
+                  String(selectedTopicId) === String(topic.id)
+                    ? 'text-navy'
+                    : 'text-slate-500'
+                "
               >
                 {{ topic.title }}
               </p>
@@ -182,77 +274,122 @@
                 {{ topic.lessons?.length || 0 }}
               </span>
 
-              <!-- DELETE TOPIC -->
-              <button
-                type="button"
-                title="Delete topic"
-                aria-label="Delete topic"
-                class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-slate-300 transition hover:bg-red-100 hover:text-red-600"
-                @click.stop="openDelete('topic', topic)"
-              >
-                <Icon name="lucide:x" class="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            <!-- LESSONS -->
-            <div class="space-y-0.5">
-              <NuxtLink
-                v-for="lesson in topic.lessons || []"
-                :key="lesson.id || lesson.slug"
-                :to="lessonUrl(lesson)"
-                class="group flex min-w-0 items-center gap-2 border-l-[3px] px-4 py-2.5 text-[13px] transition"
-                :class="
-                  isCurrentLesson(lesson)
-                    ? 'border-navy bg-white font-semibold text-navy'
-                    : 'border-transparent text-slate-600 hover:bg-white hover:text-navy'
+              <Icon
+                :name="
+                  String(selectedTopicId) === String(topic.id)
+                    ? 'lucide:chevron-down'
+                    : 'lucide:chevron-right'
                 "
-                @click="handleLessonNavigation"
+                class="h-3.5 w-3.5 shrink-0 text-slate-400"
+              />
+            </button>
+
+            <!-- ================================================= -->
+            <!-- LESSONS -->
+            <!-- ================================================= -->
+
+            <div
+              v-if="String(selectedTopicId) === String(topic.id)"
+              class="space-y-0.5 border-t border-slate-100 bg-white/50 py-1"
+            >
+              <!-- LOADING -->
+              <div
+                v-if="topicLoading"
+                class="flex items-center gap-2 px-4 py-4 text-xs text-slate-400"
               >
                 <Icon
-                  name="lucide:file-text"
-                  class="h-4 w-4 shrink-0"
+                  name="lucide:loader-2"
+                  class="h-4 w-4 animate-spin"
+                />
+
+                Loading lessons...
+              </div>
+
+              <!-- EMPTY -->
+              <div
+                v-else-if="!filteredTopicLessons.length"
+                class="px-4 py-5 text-center"
+              >
+                <Icon
+                  name="lucide:search-x"
+                  class="mx-auto h-6 w-6 text-slate-300"
+                />
+
+                <p class="mt-2 text-[11px] text-slate-400">
+                  {{
+                    topicSearchTerm
+                      ? "No lessons match your search."
+                      : "No lessons available in this topic."
+                  }}
+                </p>
+              </div>
+
+              <!-- LESSONS -->
+              <template v-else>
+                <NuxtLink
+                  v-for="lesson in filteredTopicLessons"
+                  :key="lesson.id || lesson.slug"
+                  :to="lessonUrl(lesson)"
+                  class="group flex min-w-0 items-center gap-2 border-l-[3px] px-4 py-2.5 text-[13px] transition"
                   :class="
-                    isCurrentLesson(lesson) ? 'text-gold' : 'text-slate-400'
+                    isCurrentLesson(lesson)
+                      ? 'border-navy bg-white font-semibold text-navy'
+                      : 'border-transparent text-slate-600 hover:bg-white hover:text-navy'
                   "
-                />
-
-                <span class="min-w-0 flex-1 truncate">
-                  {{ lesson.title }}
-                </span>
-
-                <!-- SAVED TIME -->
-                <span
-                  v-if="getCurrentLessonTime(lesson) > 0"
-                  class="hidden text-[9px] text-slate-400 xl:inline"
+                  @click="handleLessonNavigation"
                 >
-                  {{ formatReadingTime(getCurrentLessonTime(lesson)) }}
-                </span>
+                  <Icon
+                    name="lucide:file-text"
+                    class="h-4 w-4 shrink-0"
+                    :class="
+                      isCurrentLesson(lesson)
+                        ? 'text-gold'
+                        : 'text-slate-400'
+                    "
+                  />
 
-                <!-- READ STATUS -->
-                <Icon
-                  v-if="isCurrentLessonRead(lesson)"
-                  name="lucide:check-circle-2"
-                  class="h-4 w-4 shrink-0 text-emerald-500"
-                  title="Read"
-                />
+                  <span class="min-w-0 flex-1 truncate">
+                    {{ lesson.title }}
+                  </span>
 
-                <Icon
-                  v-else
-                  name="lucide:circle"
-                  class="h-4 w-4 shrink-0 text-slate-300"
-                  title="Unread"
-                />
-              </NuxtLink>
+                  <span
+                    v-if="getCurrentLessonTime(lesson) > 0"
+                    class="hidden text-[9px] text-slate-400 xl:inline"
+                  >
+                    {{ formatReadingTime(getCurrentLessonTime(lesson)) }}
+                  </span>
+
+                  <Icon
+                    v-if="isCurrentLessonRead(lesson)"
+                    name="lucide:check-circle-2"
+                    class="h-4 w-4 shrink-0 text-emerald-500"
+                    title="Read"
+                  />
+
+                  <Icon
+                    v-else
+                    name="lucide:circle"
+                    class="h-4 w-4 shrink-0 text-slate-300"
+                    title="Unread"
+                  />
+                </NuxtLink>
+              </template>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- MAIN CONTENT -->
+      <!-- ======================================================= -->
+      <!-- MAIN -->
+      <!-- ======================================================= -->
+
       <main
         class="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-white"
       >
-        <!-- SEARCH RESULTS -->
+        <!-- ===================================================== -->
+        <!-- GLOBAL SEARCH -->
+        <!-- ===================================================== -->
+
         <div
           v-if="showSearchResults"
           class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-10 sm:py-8"
@@ -279,7 +416,30 @@
             </button>
           </div>
 
-          <ul v-if="results.length" class="space-y-3">
+          <!-- SEARCH LOADING -->
+          <div
+            v-if="loading"
+            class="flex min-h-[250px] flex-col items-center justify-center"
+          >
+            <Icon
+              name="lucide:loader-2"
+              class="h-8 w-8 animate-spin text-gold"
+            />
+
+            <p class="mt-3 text-sm font-medium text-slate-500">
+              Searching lessons...
+            </p>
+
+            <p class="mt-1 text-xs text-slate-400">
+              Please wait while we find matching lessons.
+            </p>
+          </div>
+
+          <!-- RESULTS -->
+          <ul
+            v-else-if="results.length"
+            class="space-y-3"
+          >
             <li
               v-for="row in results"
               :key="row.slug"
@@ -303,19 +463,42 @@
             </li>
           </ul>
 
-          <div v-else class="py-12 text-center">
+          <!-- NO RESULTS -->
+          <div
+            v-else
+            class="py-12 text-center"
+          >
             <Icon
               name="lucide:search-x"
               class="mx-auto h-10 w-10 text-slate-300"
             />
 
-            <p class="mt-3 text-sm text-slate-500">
-              No lessons matched your search.
+            <p class="mt-3 text-sm font-semibold text-slate-600">
+              No lessons found
             </p>
+
+            <p class="mx-auto mt-1 max-w-sm text-xs leading-5 text-slate-400">
+              No lessons matched
+              <span class="font-semibold text-slate-500">
+                "{{ searchTerm }}"
+              </span>.
+              Try another lesson title or keyword.
+            </p>
+
+            <button
+              type="button"
+              class="mt-4 rounded-lg bg-navy px-4 py-2 text-xs font-semibold text-white transition hover:bg-navy/90"
+              @click="clearSearch"
+            >
+              Clear search
+            </button>
           </div>
         </div>
 
-        <!-- SUBJECT LANDING PAGE -->
+        <!-- ===================================================== -->
+        <!-- SUBJECT LANDING -->
+        <!-- ===================================================== -->
+
         <article
           v-else-if="!currentLesson"
           class="mx-auto w-full max-w-5xl px-4 py-7 sm:px-10 sm:py-10"
@@ -334,12 +517,12 @@
             </h1>
 
             <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-500">
-              Read the subject material below or select a lesson from the
-              sidebar to begin learning.
+              Read the subject material below or select a topic and lesson from
+              the sidebar to begin learning.
             </p>
           </div>
 
-          <!-- PDF -->
+          <!-- SUBJECT PDF -->
           <div
             v-if="subjectPdfUrl"
             class="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm"
@@ -348,7 +531,10 @@
               class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3"
             >
               <div class="flex items-center gap-2">
-                <Icon name="lucide:file-pdf" class="h-5 w-5 text-red-500" />
+                <Icon
+                  name="lucide:file-pdf"
+                  class="h-5 w-5 text-red-500"
+                />
 
                 <span class="text-sm font-semibold text-slate-700">
                   Subject PDF
@@ -362,7 +548,11 @@
                 class="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
               >
                 Open PDF
-                <Icon name="lucide:external-link" class="h-3.5 w-3.5" />
+
+                <Icon
+                  name="lucide:external-link"
+                  class="h-3.5 w-3.5"
+                />
               </a>
             </div>
 
@@ -388,7 +578,8 @@
             </h2>
 
             <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
-              Choose a topic and lesson from the sidebar to start studying.
+              Choose a topic from the sidebar, then select a lesson to start
+              studying.
             </p>
 
             <button
@@ -398,7 +589,11 @@
               @click="navigateTo(lessonUrl(firstLesson))"
             >
               Start Learning
-              <Icon name="lucide:arrow-right" class="h-4 w-4" />
+
+              <Icon
+                name="lucide:arrow-right"
+                class="h-4 w-4"
+              />
             </button>
           </div>
 
@@ -407,27 +602,42 @@
             v-if="selectedSubjectTopics.length"
             class="mt-8 grid gap-3 sm:grid-cols-2"
           >
-            <div
+            <button
               v-for="topic in selectedSubjectTopics"
               :key="topic.id"
-              class="rounded-xl border border-slate-200 bg-white p-4"
+              type="button"
+              class="rounded-xl border border-slate-200 bg-white p-4 text-left transition hover:border-navy hover:shadow-sm"
+              @click="selectTopic(topic)"
             >
               <div class="flex items-center gap-2">
-                <Icon name="lucide:folder" class="h-4 w-4 text-gold" />
+                <Icon
+                  name="lucide:folder"
+                  class="h-4 w-4 text-gold"
+                />
 
-                <h3 class="min-w-0 truncate text-sm font-bold text-navy">
+                <h3
+                  class="min-w-0 flex-1 truncate text-sm font-bold text-navy"
+                >
                   {{ topic.title }}
                 </h3>
+
+                <Icon
+                  name="lucide:chevron-right"
+                  class="h-4 w-4 shrink-0 text-slate-300"
+                />
               </div>
 
               <p class="mt-2 text-xs text-slate-500">
                 {{ topic.lessons?.length || 0 }} lessons available
               </p>
-            </div>
+            </button>
           </div>
         </article>
 
+        <!-- ===================================================== -->
         <!-- LESSON CONTENT -->
+        <!-- ===================================================== -->
+
         <article
           v-else
           class="mx-auto w-full max-w-3xl px-4 py-6 sm:px-10 sm:py-10"
@@ -438,13 +648,21 @@
           >
             <span>{{ breadcrumbSubject }}</span>
 
-            <Icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
+            <Icon
+              name="lucide:chevron-right"
+              class="h-3.5 w-3.5"
+            />
 
             <span>{{ breadcrumbTopic }}</span>
 
-            <Icon name="lucide:chevron-right" class="h-3.5 w-3.5" />
+            <Icon
+              name="lucide:chevron-right"
+              class="h-3.5 w-3.5"
+            />
 
-            <span class="font-semibold text-slate-600"> Lesson </span>
+            <span class="font-semibold text-slate-600">
+              Lesson
+            </span>
           </div>
 
           <!-- LESSON TITLE -->
@@ -455,30 +673,44 @@
               {{ currentLesson.title }}
             </h1>
 
-            <!-- READ STATUS -->
+            <!-- READ -->
             <span
               v-if="isLessonRead(currentLesson)"
               class="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-50 px-2 py-1.5 text-[10px] font-semibold text-emerald-600 sm:px-3 sm:text-xs"
             >
-              <Icon name="lucide:check-circle-2" class="h-4 w-4" />
-              <span class="hidden sm:inline">Read</span>
+              <Icon
+                name="lucide:check-circle-2"
+                class="h-4 w-4"
+              />
+
+              <span class="hidden sm:inline">
+                Read
+              </span>
             </span>
 
             <span
               v-else
               class="inline-flex shrink-0 items-center gap-1 rounded-full bg-slate-100 px-2 py-1.5 text-[10px] font-semibold text-slate-500 sm:px-3 sm:text-xs"
             >
-              <Icon name="lucide:circle" class="h-4 w-4" />
-              <span class="hidden sm:inline">Unread</span>
+              <Icon
+                name="lucide:circle"
+                class="h-4 w-4"
+              />
+
+              <span class="hidden sm:inline">
+                Unread
+              </span>
             </span>
           </div>
 
           <!-- TOPIC IMPORTER -->
           <div class="mt-5">
-            <!-- <TopicImporter
+            <!--
+            <TopicImporter
               :lesson-id="currentLesson.id ?? currentLesson.lessonId"
               @updated="handleLessonUpdated"
-            /> -->
+            />
+            -->
           </div>
 
           <!-- LESSON BLOCKS -->
@@ -490,7 +722,10 @@
             />
           </div>
 
-          <!-- AUTOMATIC READING PROGRESS -->
+          <!-- =================================================== -->
+          <!-- READING PROGRESS -->
+          <!-- =================================================== -->
+
           <div
             class="mt-10 hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:p-5"
           >
@@ -515,8 +750,9 @@
                 </div>
 
                 <div class="min-w-0 hidden">
-
-                  <h3 class="text-sm  hidden font-bold text-slate-800 sm:text-base">
+                  <h3
+                    class="text-sm hidden font-bold text-slate-800 sm:text-base"
+                  >
                     {{
                       isLessonRead(currentLesson)
                         ? "Reading completed"
@@ -524,7 +760,9 @@
                     }}
                   </h3>
 
-                  <p class="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+                  <p
+                    class="mt-1 text-xs leading-5 text-slate-500 sm:text-sm"
+                  >
                     {{
                       isLessonRead(currentLesson)
                         ? "Your active reading time has been saved for this lesson."
@@ -549,7 +787,9 @@
             <!-- TIME CARDS -->
             <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               <div class="rounded-xl bg-white p-3">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                <p
+                  class="text-[10px] uppercase tracking-wide text-slate-400"
+                >
                   Estimated time
                 </p>
 
@@ -559,7 +799,9 @@
               </div>
 
               <div class="rounded-xl bg-white p-3">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                <p
+                  class="text-[10px] uppercase tracking-wide text-slate-400"
+                >
                   Required time
                 </p>
 
@@ -568,8 +810,12 @@
                 </p>
               </div>
 
-              <div class="col-span-2 rounded-xl bg-white p-3 sm:col-span-1">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+              <div
+                class="col-span-2 rounded-xl bg-white p-3 sm:col-span-1"
+              >
+                <p
+                  class="text-[10px] uppercase tracking-wide text-slate-400"
+                >
                   Saved active time
                 </p>
 
@@ -581,7 +827,9 @@
 
             <!-- READING PROGRESS -->
             <div class="mt-5">
-              <div class="mb-2 flex items-center justify-between gap-3">
+              <div
+                class="mb-2 flex items-center justify-between gap-3"
+              >
                 <span class="text-xs font-semibold text-slate-600">
                   Reading progress
                 </span>
@@ -591,33 +839,47 @@
                 </span>
               </div>
 
-              <div class="h-2.5 overflow-hidden rounded-full bg-slate-200">
+              <div
+                class="h-2.5 overflow-hidden rounded-full bg-slate-200"
+              >
                 <div
                   class="h-full rounded-full transition-all duration-500"
                   :class="
-                    isLessonRead(currentLesson) ? 'bg-emerald-500' : 'bg-gold'
+                    isLessonRead(currentLesson)
+                      ? 'bg-emerald-500'
+                      : 'bg-gold'
                   "
-                  :style="{ width: `${readingProgressPercent}%` }"
+                  :style="{
+                    width: `${readingProgressPercent}%`,
+                  }"
                 ></div>
               </div>
 
               <p class="mt-2 text-[11px] leading-5 text-slate-500">
                 <span v-if="!isLessonRead(currentLesson)">
-                  {{ remainingReadingMinutes }} minute(s) remaining. Switching
-                  tabs pauses the reading timer.
+                  {{ remainingReadingMinutes }} minute(s) remaining.
+                  Switching tabs pauses the reading timer.
                 </span>
 
-                <span v-else class="font-semibold text-emerald-600">
-                  Great work! This lesson has been automatically marked as read.
+                <span
+                  v-else
+                  class="font-semibold text-emerald-600"
+                >
+                  Great work! This lesson has been automatically marked
+                  as read.
                 </span>
               </p>
             </div>
           </div>
 
-          <!-- PREVIOUS/NEXT -->
+          <!-- =================================================== -->
+          <!-- PREVIOUS / NEXT -->
+          <!-- =================================================== -->
+
           <div
             class="mt-8 flex items-stretch justify-between gap-3 border-t border-slate-200 pt-6"
           >
+            <!-- PREVIOUS -->
             <NuxtLink
               v-if="prevLesson"
               :to="lessonUrl(prevLesson)"
@@ -629,29 +891,41 @@
               />
 
               <div class="min-w-0">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                <p
+                  class="text-[10px] uppercase tracking-wide text-slate-400"
+                >
                   Previous
                 </p>
 
-                <p class="truncate text-xs font-semibold text-navy sm:text-sm">
+                <p
+                  class="truncate text-xs font-semibold text-navy sm:text-sm"
+                >
                   {{ prevLesson.title }}
                 </p>
               </div>
             </NuxtLink>
 
-            <div v-else class="flex-1"></div>
+            <div
+              v-else
+              class="flex-1"
+            ></div>
 
+            <!-- NEXT -->
             <NuxtLink
               v-if="nextLesson"
               :to="lessonUrl(nextLesson)"
               class="flex min-w-0 flex-1 items-center justify-end gap-2 rounded-xl border border-slate-200 px-3 py-3 text-right transition hover:border-navy sm:px-4"
             >
               <div class="min-w-0">
-                <p class="text-[10px] uppercase tracking-wide text-slate-400">
+                <p
+                  class="text-[10px] uppercase tracking-wide text-slate-400"
+                >
                   Next
                 </p>
 
-                <p class="truncate text-xs font-semibold text-navy sm:text-sm">
+                <p
+                  class="truncate text-xs font-semibold text-navy sm:text-sm"
+                >
                   {{ nextLesson.title }}
                 </p>
               </div>
@@ -662,11 +936,17 @@
               />
             </NuxtLink>
 
-            <div v-else class="flex-1"></div>
+            <div
+              v-else
+              class="flex-1"
+            ></div>
           </div>
         </article>
 
+        <!-- ===================================================== -->
         <!-- LOADING -->
+        <!-- ===================================================== -->
+
         <div
           v-if="loading"
           class="flex min-h-[300px] flex-col items-center justify-center"
@@ -683,7 +963,10 @@
       </main>
     </div>
 
+    <!-- ========================================================= -->
     <!-- DELETE MODAL -->
+    <!-- ========================================================= -->
+
     <Teleport to="body">
       <div
         v-if="showDelete"
@@ -703,10 +986,29 @@
     </Teleport>
   </div>
 </template>
+
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+} from "vue";
+
+/*
+|--------------------------------------------------------------------------
+| ROUTE
+|--------------------------------------------------------------------------
+*/
 
 const route = useRoute();
+
+/*
+|--------------------------------------------------------------------------
+| LESSONS COMPOSABLE
+|--------------------------------------------------------------------------
+*/
 
 const {
   sidebar,
@@ -721,7 +1023,7 @@ const {
 
 /*
 |--------------------------------------------------------------------------
-| LESSON PROGRESS COMPOSABLE
+| LESSON PROGRESS
 |--------------------------------------------------------------------------
 */
 
@@ -732,17 +1034,16 @@ const {
   requiredReadingMinutes,
   readingProgressPercent,
   remainingReadingMinutes,
-
   loadLessonProgress,
   getLessonTime,
   isLessonRead,
   getSubjectProgress,
-
   flushReadingTime,
   resetReadingTracker,
   stopReadingTimer,
   formatReadingTime,
 } = useLessonProgress();
+
 /*
 |--------------------------------------------------------------------------
 | ROUTE PARAMETERS
@@ -778,13 +1079,28 @@ const routeLessonSlug = computed(() => {
 */
 
 const sidebarOpen = ref(false);
+
 const searchTerm = ref("");
+
 const showSearchResults = ref(false);
 
 const prevLesson = ref<any>(null);
+
 const nextLesson = ref<any>(null);
 
 const openSubjects = ref(new Set());
+
+/*
+|--------------------------------------------------------------------------
+| TOPIC STATE
+|--------------------------------------------------------------------------
+*/
+
+const selectedTopicId = ref<string | null>(null);
+
+const topicSearchTerm = ref("");
+
+const topicLoading = ref(false);
 
 let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -795,18 +1111,26 @@ let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 */
 
 const showDelete = ref(false);
+
 const deleteType = ref("topic");
+
 const deleteId = ref("");
+
 const deleteName = ref("");
 
 /*
 |--------------------------------------------------------------------------
-| LESSON IDENTIFICATION
+| HELPERS
 |--------------------------------------------------------------------------
 */
 
 const lessonKey = (lesson: any) => {
-  return String(lesson?.id || lesson?.lessonId || lesson?.slug || "");
+  return String(
+    lesson?.id ||
+      lesson?.lessonId ||
+      lesson?.slug ||
+      "",
+  );
 };
 
 const createSlug = (text = "") => {
@@ -842,29 +1166,118 @@ const selectedSubject = computed(() => {
 
 const currentSubjectKey = computed(() => {
   return (
-    selectedSubject.value?.slug || routeSubjectSlug.value || "default-subject"
+    selectedSubject.value?.slug ||
+    routeSubjectSlug.value ||
+    "default-subject"
   );
 });
+
+/*
+|--------------------------------------------------------------------------
+| SUBJECT TOPICS
+|--------------------------------------------------------------------------
+*/
 
 const selectedSubjectTopics = computed(() => {
   return selectedSubject.value?.topics || [];
 });
 
-const totalLessons = computed(() => {
-  return selectedSubjectTopics.value.reduce((total: number, topic: any) => {
-    return total + (topic.lessons?.length || 0);
-  }, 0);
+/*
+|--------------------------------------------------------------------------
+| SELECTED TOPIC
+|--------------------------------------------------------------------------
+*/
+
+const selectedTopic = computed(() => {
+  if (!selectedTopicId.value) {
+    return null;
+  }
+
+  return (
+    selectedSubjectTopics.value.find(
+      (topic: any) =>
+        String(topic.id) ===
+        String(selectedTopicId.value),
+    ) || null
+  );
 });
+
+const selectedTopicLessons = computed(() => {
+  return selectedTopic.value?.lessons || [];
+});
+
+/*
+|--------------------------------------------------------------------------
+| FILTER TOPIC LESSONS
+|--------------------------------------------------------------------------
+*/
+
+const filteredTopicLessons = computed(() => {
+  const lessons = selectedTopicLessons.value;
+
+  const term = topicSearchTerm.value
+    .trim()
+    .toLowerCase();
+
+  if (!term) {
+    return lessons;
+  }
+
+  return lessons.filter((lesson: any) => {
+    const title = String(
+      lesson?.title || "",
+    ).toLowerCase();
+
+    const slug = String(
+      lesson?.slug || "",
+    ).toLowerCase();
+
+    return (
+      title.includes(term) ||
+      slug.includes(term)
+    );
+  });
+});
+
+/*
+|--------------------------------------------------------------------------
+| TOTAL LESSONS
+|--------------------------------------------------------------------------
+*/
+
+const totalLessons = computed(() => {
+  return selectedSubjectTopics.value.reduce(
+    (total: number, topic: any) => {
+      return (
+        total +
+        (topic.lessons?.length || 0)
+      );
+    },
+    0,
+  );
+});
+
+/*
+|--------------------------------------------------------------------------
+| ALL LESSONS
+|--------------------------------------------------------------------------
+*/
 
 const allSubjectLessons = computed(() => {
   return selectedSubjectTopics.value.flatMap(
-    (topic: any) => topic.lessons || []
+    (topic: any) => topic.lessons || [],
   );
 });
 
 const firstLesson = computed(() => {
   return allSubjectLessons.value[0] || null;
 });
+
+/*
+|--------------------------------------------------------------------------
+| PDF
+|--------------------------------------------------------------------------
+*/
 
 const subjectPdfUrl = computed(() => {
   const subject = selectedSubject.value;
@@ -886,11 +1299,17 @@ const subjectPdfUrl = computed(() => {
 */
 
 const getCurrentLessonTime = (lesson: any) => {
-  return getLessonTime(currentSubjectKey.value, lesson);
+  return getLessonTime(
+    currentSubjectKey.value,
+    lesson,
+  );
 };
 
 const isCurrentLessonRead = (lesson: any) => {
-  return isLessonRead(currentSubjectKey.value, lesson);
+  return isLessonRead(
+    currentSubjectKey.value,
+    lesson,
+  );
 };
 
 /*
@@ -898,9 +1317,13 @@ const isCurrentLessonRead = (lesson: any) => {
 | SUBJECT PROGRESS
 |--------------------------------------------------------------------------
 */
+
 const progressPercent = computed(() => {
-  return getSubjectProgress(currentSubjectKey.value);
+  return getSubjectProgress(
+    currentSubjectKey.value,
+  );
 });
+
 /*
 |--------------------------------------------------------------------------
 | ROUTE HELPERS
@@ -924,7 +1347,9 @@ const lessonUrl = (lesson: any) => {
 };
 
 const lessonSearchUrl = (row: any) => {
-  const subject = row?.subjectSlug || subjectSlug.value;
+  const subject =
+    row?.subjectSlug ||
+    subjectSlug.value;
 
   const lesson = row?.slug;
 
@@ -940,12 +1365,68 @@ const lessonSearchUrl = (row: any) => {
 };
 
 const isCurrentLesson = (lesson: any) => {
-  return routeLessonSlug.value === String(lesson?.slug || "");
+  return (
+    routeLessonSlug.value ===
+    String(lesson?.slug || "")
+  );
 };
+
+/*
+|--------------------------------------------------------------------------
+| SELECT TOPIC
+|--------------------------------------------------------------------------
+*/
+
+const selectTopic = (topic: any) => {
+  if (!topic) return;
+
+  selectedTopicId.value = String(
+    topic.id,
+  );
+
+  topicSearchTerm.value = "";
+
+  searchTerm.value = "";
+
+  showSearchResults.value = false;
+
+  topicLoading.value = false;
+
+  if (
+    import.meta.client &&
+    window.innerWidth < 1024
+  ) {
+    sidebarOpen.value = false;
+  }
+};
+
+/*
+|--------------------------------------------------------------------------
+| CLEAR SELECTED TOPIC
+|--------------------------------------------------------------------------
+*/
+
+const clearSelectedTopic = () => {
+  selectedTopicId.value = null;
+
+  topicSearchTerm.value = "";
+
+  searchTerm.value = "";
+
+  showSearchResults.value = false;
+};
+
+/*
+|--------------------------------------------------------------------------
+| LESSON NAVIGATION
+|--------------------------------------------------------------------------
+*/
 
 const handleLessonNavigation = () => {
   flushReadingTime();
+
   stopReadingTimer();
+
   sidebarOpen.value = false;
 };
 
@@ -956,68 +1437,137 @@ const handleLessonNavigation = () => {
 */
 
 const breadcrumbSubject = computed(() => {
-  return selectedSubject.value?.name || currentLesson.value?.subjectName || "";
+  return (
+    selectedSubject.value?.name ||
+    currentLesson.value?.subjectName ||
+    ""
+  );
 });
 
 const breadcrumbTopic = computed(() => {
-  if (!currentLesson.value) return "";
+  if (!currentLesson.value) {
+    return "";
+  }
 
-  const topicId = currentLesson.value.topic_id || currentLesson.value.topicId;
+  const topicId =
+    currentLesson.value.topic_id ||
+    currentLesson.value.topicId;
 
-  const topic = selectedSubjectTopics.value.find((item: any) => {
-    return String(item.id) === String(topicId);
-  });
+  const topic =
+    selectedSubjectTopics.value.find(
+      (item: any) => {
+        return (
+          String(item.id) ===
+          String(topicId)
+        );
+      },
+    );
 
-  return topic?.title || currentLesson.value?.topicTitle || "";
+  return (
+    topic?.title ||
+    currentLesson.value?.topicTitle ||
+    ""
+  );
 });
 
 /*
 |--------------------------------------------------------------------------
-| LOAD LESSON
+| OPEN LESSON
 |--------------------------------------------------------------------------
 */
 
-const openLessonBySlug = async (slug: string) => {
+const openLessonBySlug = async (
+  slug: string,
+) => {
   flushReadingTime();
+
   stopReadingTimer();
 
   sidebarOpen.value = false;
+
   showSearchResults.value = false;
 
   if (!slug) {
     prevLesson.value = null;
+
     nextLesson.value = null;
+
     return;
   }
 
   await loadLesson(slug);
+
   if (currentLesson.value) {
     resetReadingTracker(
       currentSubjectKey.value,
       currentLesson.value,
-      totalLessons.value
+      totalLessons.value,
     );
   }
 
-  prevLesson.value = await adjacentLesson("previous");
-  nextLesson.value = await adjacentLesson("next");
+  prevLesson.value =
+    await adjacentLesson("previous");
 
-  const owner = sidebar.value.find((subject: any) => {
-    return subject.topics?.some((topic: any) => {
-      return topic.lessons?.some((lesson: any) => {
-        return lesson.slug === slug;
-      });
-    });
-  });
+  nextLesson.value =
+    await adjacentLesson("next");
+
+  /*
+  |--------------------------------------------------------------------------
+  | FIND LESSON TOPIC
+  |--------------------------------------------------------------------------
+  */
+
+  const owner = sidebar.value.find(
+    (subject: any) => {
+      return subject.topics?.some(
+        (topic: any) => {
+          return topic.lessons?.some(
+            (lesson: any) => {
+              return (
+                lesson.slug === slug
+              );
+            },
+          );
+        },
+      );
+    },
+  );
 
   if (owner) {
-    openSubjects.value = new Set([...openSubjects.value, owner.id]);
+    openSubjects.value = new Set([
+      ...openSubjects.value,
+      owner.id,
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | FIND AND SELECT CURRENT TOPIC
+    |--------------------------------------------------------------------------
+    */
+
+    const currentTopic =
+      owner.topics?.find(
+        (topic: any) => {
+          return topic.lessons?.some(
+            (lesson: any) => {
+              return (
+                lesson.slug === slug
+              );
+            },
+          );
+        },
+      );
+
+    if (currentTopic) {
+      selectedTopicId.value =
+        String(currentTopic.id);
+    }
   }
 };
 
 /*
 |--------------------------------------------------------------------------
-| SEARCH
+| GLOBAL SEARCH
 |--------------------------------------------------------------------------
 */
 
@@ -1026,21 +1576,34 @@ const onSearchInput = () => {
     clearTimeout(debounceTimer);
   }
 
-  const term = searchTerm.value.trim();
+  const term =
+    searchTerm.value.trim();
 
   if (!term) {
     showSearchResults.value = false;
+
     return;
   }
 
-  debounceTimer = setTimeout(async () => {
-    showSearchResults.value = true;
-    await search(term);
-  }, 250);
+  debounceTimer = setTimeout(
+    async () => {
+      showSearchResults.value = true;
+
+      await search(term);
+    },
+    250,
+  );
 };
+
+/*
+|--------------------------------------------------------------------------
+| CLEAR SEARCH
+|--------------------------------------------------------------------------
+*/
 
 const clearSearch = () => {
   searchTerm.value = "";
+
   showSearchResults.value = false;
 };
 
@@ -1050,11 +1613,19 @@ const clearSearch = () => {
 |--------------------------------------------------------------------------
 */
 
-const openDelete = (type: string, item: any) => {
+const openDelete = (
+  type: string,
+  item: any,
+) => {
   deleteType.value = type;
-  deleteId.value = item?.id || "";
 
-  deleteName.value = type === "subject" ? item?.name || "" : item?.title || "";
+  deleteId.value =
+    item?.id || "";
+
+  deleteName.value =
+    type === "subject"
+      ? item?.name || ""
+      : item?.title || "";
 
   showDelete.value = true;
 };
@@ -1069,7 +1640,9 @@ const handleDeleted = async () => {
   await loadSidebar();
 
   if (currentLesson.value?.slug) {
-    await openLessonBySlug(currentLesson.value.slug);
+    await openLessonBySlug(
+      currentLesson.value.slug,
+    );
   }
 };
 
@@ -1079,13 +1652,16 @@ const handleDeleted = async () => {
 |--------------------------------------------------------------------------
 */
 
-const handleLessonUpdated = async () => {
-  flushReadingTime();
+const handleLessonUpdated =
+  async () => {
+    flushReadingTime();
 
-  if (routeLessonSlug.value) {
-    await openLessonBySlug(routeLessonSlug.value);
-  }
-};
+    if (routeLessonSlug.value) {
+      await openLessonBySlug(
+        routeLessonSlug.value,
+      );
+    }
+  };
 
 /*
 |--------------------------------------------------------------------------
@@ -1093,29 +1669,47 @@ const handleLessonUpdated = async () => {
 |--------------------------------------------------------------------------
 */
 
-const renderSnippet = (snippet: any) => {
-  if (!snippet) return "";
+const renderSnippet = (
+  snippet: any,
+) => {
+  if (!snippet) {
+    return "";
+  }
 
   return String(snippet)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
+    .replace(
+      /&/g,
+      "&amp;",
+    )
+    .replace(
+      /</g,
+      "&lt;",
+    )
+    .replace(
+      />/g,
+      "&gt;",
+    )
     .replace(
       /⟦/g,
-      '<mark class="bg-transparent font-semibold text-navy border-b-2 border-gold">'
+      '<mark class="bg-transparent font-semibold text-navy border-b-2 border-gold">',
     )
-    .replace(/⟧/g, "</mark>");
+    .replace(
+      /⟧/g,
+      "</mark>",
+    );
 };
 
 /*
 |--------------------------------------------------------------------------
-| NAVIGATION
+| HOME
 |--------------------------------------------------------------------------
 */
 
 const goHome = () => {
   flushReadingTime();
+
   stopReadingTimer();
+
   navigateTo("/");
 };
 
@@ -1125,17 +1719,62 @@ const goHome = () => {
 |--------------------------------------------------------------------------
 */
 
-const handleReadingVisibility = () => {
-  if (document.hidden) {
-    stopReadingTimer();
-  } else if (currentLesson.value) {
-    resetReadingTracker(
-      currentSubjectKey.value,
-      currentLesson.value,
-      totalLessons.value
-    );
-  }
-};
+const handleReadingVisibility =
+  () => {
+    if (document.hidden) {
+      stopReadingTimer();
+    } else if (currentLesson.value) {
+      resetReadingTracker(
+        currentSubjectKey.value,
+        currentLesson.value,
+        totalLessons.value,
+      );
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| WATCH SUBJECT
+|--------------------------------------------------------------------------
+*/
+
+watch(
+  () => routeSubjectSlug.value,
+  () => {
+    selectedTopicId.value = null;
+
+    topicSearchTerm.value = "";
+
+    searchTerm.value = "";
+
+    showSearchResults.value =
+      false;
+
+    loadLessonProgress();
+  },
+);
+
+/*
+|--------------------------------------------------------------------------
+| WATCH LESSON
+|--------------------------------------------------------------------------
+*/
+
+watch(
+  () => routeLessonSlug.value,
+  (
+    lessonSlug,
+    oldLessonSlug,
+  ) => {
+    if (
+      lessonSlug !== oldLessonSlug
+    ) {
+      openLessonBySlug(
+        lessonSlug,
+      );
+    }
+  },
+);
 
 /*
 |--------------------------------------------------------------------------
@@ -1147,36 +1786,33 @@ onMounted(async () => {
   loadLessonProgress();
 
   if (import.meta.client) {
-    document.addEventListener("visibilitychange", handleReadingVisibility);
+    document.addEventListener(
+      "visibilitychange",
+      handleReadingVisibility,
+    );
   }
 
   await loadSidebar();
 
-  const lessonSlug = routeLessonSlug.value;
+  const lessonSlug =
+    routeLessonSlug.value;
 
   if (lessonSlug) {
-    await openLessonBySlug(lessonSlug);
+    await openLessonBySlug(
+      lessonSlug,
+    );
   }
 });
 
-watch(
-  () => routeSubjectSlug.value,
-  () => {
-    loadLessonProgress();
-  }
-);
-
-watch(
-  () => routeLessonSlug.value,
-  (lessonSlug, oldLessonSlug) => {
-    if (lessonSlug !== oldLessonSlug) {
-      openLessonBySlug(lessonSlug);
-    }
-  }
-);
+/*
+|--------------------------------------------------------------------------
+| CLEANUP
+|--------------------------------------------------------------------------
+*/
 
 onBeforeUnmount(() => {
   flushReadingTime();
+
   stopReadingTimer();
 
   if (debounceTimer) {
@@ -1184,13 +1820,19 @@ onBeforeUnmount(() => {
   }
 
   if (import.meta.client) {
-    document.removeEventListener("visibilitychange", handleReadingVisibility);
+    document.removeEventListener(
+      "visibilitychange",
+      handleReadingVisibility,
+    );
   }
 });
-</script><style scoped>
+</script>
+
+<style scoped>
 .prose-lesson :deep(br) {
   display: block;
   content: "";
   margin-top: 0.7em;
 }
 </style>
+

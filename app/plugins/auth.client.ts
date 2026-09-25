@@ -43,7 +43,9 @@ export default defineNuxtPlugin(async () => {
 
     // User is logged in but license is not activated
    
-
+await navigateTo("/software-activation", {
+        replace: true,
+      })
     console.log("✅ Authentication access granted")
   } catch (error) {
     console.error("❌ Auth plugin failed:", error)
