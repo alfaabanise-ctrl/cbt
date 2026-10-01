@@ -22,7 +22,7 @@ export function useLessons() {
 
   const loadSidebar = async () => {
 
-    loading.value = false
+    loading.value = true
     error.value = null
 
     try {
@@ -35,7 +35,6 @@ export function useLessons() {
       // console.log('📊 subjects count (raw):', rawSubjects)
 
       sidebar.value = await platform.lesson.getSidebar()
-      console.log(sidebar.value, 'sidebar.value');
       
     } catch (err) {
 
@@ -50,8 +49,6 @@ export function useLessons() {
 
       loading.value = false
     }
-    console.log(loading.value,'loading.value');
-    
   }
 
   // --------------------------------------------------

@@ -1,11 +1,5 @@
-import Database from "@tauri-apps/plugin-sql";
-import platfrom from "../platforms/index";
-let db = null;
+import { getQuestionsDB } from "../utils/databases"
 
 export async function useDatabase() {
-  if (!db) {
-    db = platfrom.database();
-  }
-
-  return db;
+  return getQuestionsDB()
 }

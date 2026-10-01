@@ -61,7 +61,7 @@
         <button
           type="button"
           class="flex items-center gap-1.5 rounded-full bg-navy-soft px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
-          @click="showSubjectModal = true"
+          @click="openSubjectPicker"
         >
           <Icon name="lucide:refresh-cw" class="h-3.5 w-3.5" />
           Set Subject
@@ -291,6 +291,10 @@
     <SelectSubject
       v-model="showSubjectModal"
       v-model:modelSubjects="studySubjects"
+      :subjects="availableSubjects"
+      :subjects-loading="availableSubjectsLoading"
+      :subjects-error="availableSubjectsError"
+      count-label="lessons"
     />
   </div>
 </template>
@@ -306,6 +310,10 @@ const appState = useAppState();
 const {
   currentUser,
   studySubjects,
+  availableSubjects,
+  availableSubjectsLoading,
+  availableSubjectsError,
+  loadAvailableSubjects,
   removeSubject,
   reorderSubject,
   addUser,
@@ -335,6 +343,7 @@ onMounted(() => {
   loadClassroom();
   loadAllProgress();
   loadLessonProgress()
+  void loadAvailableSubjects()
 });
 
 /* =========================================================
@@ -380,6 +389,11 @@ const closeAddUser = () => {
   newUserName.value = "";
   showAddUser.value = false;
 };
+
+const openSubjectPicker = async () => {
+  showSubjectModal.value = true
+  await loadAvailableSubjects()
+}
 
 /* =========================================================
    OPEN SUBJECT

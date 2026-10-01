@@ -252,7 +252,14 @@ const props = defineProps({
 
 function formatTotalTime(questions = []) {
   const totalSeconds = questions.reduce(
-    (total, question) => total + Number(question?.timeSpent || 0),
+    (total, question) => {
+      const seconds = Number(question?.timeSpent)
+      return total + (
+        Number.isFinite(seconds) && seconds > 0
+          ? Math.floor(seconds)
+          : 0
+      )
+    },
     0
   );
 

@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onBeforeUnmount } from "vue"
 import { getCurrentWindow } from "@tauri-apps/api/window"
+import { durationToSeconds, secondsToDuration } from "~/utils/examTime"
 
 const appWindow = getCurrentWindow()
 const appState = useAppState()
@@ -318,22 +319,17 @@ maxAggregate = Number(maxAggregate.toFixed(2))
 
   examHeader.value?.stop()
 
-  const totalDuration = timeToSeconds(
+  const totalDuration = durationToSeconds(
     appState.value.examSettings.duration
   )
 
-const timeLeft = examHeader.value?.getTimeLeft?.() || 0
+  const remainingTime = Number(examHeader.value?.getTimeLeft?.())
+  const timeLeft = Number.isFinite(remainingTime)
+    ? Math.max(0, Math.min(totalDuration, remainingTime))
+    : totalDuration
 
-  const durationUsed = totalDuration - timeLeft
-
-  const hours = Math.floor(durationUsed / 3600)
-  const minutes = Math.floor((durationUsed % 3600) / 60)
-  const seconds = durationUsed % 60
-
-  const timeSpent =
-    `${String(hours).padStart(2, "0")}:` +
-    `${String(minutes).padStart(2, "0")}:` +
-    `${String(seconds).padStart(2, "0")}`
+  const durationUsed = Math.max(0, totalDuration - timeLeft)
+  const timeSpent = secondsToDuration(durationUsed)
 
   const speed = Number(
     (
@@ -342,10 +338,9 @@ const timeLeft = examHeader.value?.getTimeLeft?.() || 0
     ).toFixed(2)
   )
 
-  const timePercent = Math.min(
-    Math.round((durationUsed / totalDuration) * 100),
-    100
-  )
+  const timePercent = totalDuration > 0
+    ? Math.min(Math.round((durationUsed / totalDuration) * 100), 100)
+    : 0
   
   const result = {
     total,
@@ -559,20 +554,11 @@ const currentTime = ref(0)
 function ticking(seconds) {
   currentTime.value = seconds
 }
-function timeToSeconds(time) {
-  const [hours, minutes, seconds] = time.split(":").map(Number)
-
-  return (hours * 3600) + (minutes * 60) + seconds
-}
-
 onMounted( async () => {
   
   // await load()
   // console.log(histories.value);
   
-  const  examDuration= timeToSeconds(appState.value.examSettings.duration);
-    
-      
     // if (!appState.value.selectedSubjects?.length) return
   
      
@@ -855,7 +841,7 @@ const getQuestionClass = (question, index) => {
             
 
             <div class="mx-auto w-full">
-
+            
               <!-- QUESTION IMAGE -->
               <img
                 v-if="currentQuestion?.imageUrl"
@@ -863,18 +849,24 @@ const getQuestionClass = (question, index) => {
                 class="mb-3 max-h-64 max-w-full object-contain"
                 alt="Question image"
               />
+            <div
+              v-if="currentQuestion?.section"
+              v-html="currentQuestion.section"
+              class="question-section"
+            ></div>
+
+            <div
+              v-html="
+                currentQuestion?.question ||
+                currentQuestion?.text ||
+                'Question not available'
+              "
+              class="question-content"
+            ></div>
 
               <!-- QUESTION TEXT -->
-              <h2
-                class="mb-5 text-sm font-medium leading-relaxed sm:text-[17px]"
-              >
-                {{
-                  currentQuestion?.question ||
-                  currentQuestion?.text ||
-                  "Question not available"
-                }}
-              </h2>
-
+              
+             
               <!-- OPTIONS -->
               <div class="space-y-1">
                 <label
@@ -882,7 +874,7 @@ const getQuestionClass = (question, index) => {
                     currentQuestion?.options || {}
                   )"
                   :key="key"
-                  class="flex cursor-pointer items-center gap-2 rounded-xl sm:p-4 p-1 transition-all hover:bg-slate-50"
+                  class="flex cursor-pointer items-center gap-2 rounded-xl sm:p-2 p-1 transition-all hover:bg-slate-50"
                 >
                   <input
                     v-model="currentQuestion.userAnswer"
@@ -958,20 +950,12 @@ const getQuestionClass = (question, index) => {
                 v-if="Submitted"
                 class="mt-5 text-sm border-t border-slate-200 pt-4"
               >
-                <h3 class="mb-2 sm:text-lg text-sm font-semibold">
-                  Explanation
-                </h3>
+                            <QuestionExplanation
+                v-if="currentQuestion"
+                :question="currentQuestion"
+              />
 
-                <h3 class="font-">
-                  Topic:
-                  <span class="font-medium">
-                    {{ currentQuestion?.topic || "Not specified" }}
-                  </span>
-                </h3>
-
-                <p class="mt-2 leading-relaxed">
-                  {{ currentQuestion?.solution || "No explanation available." }}
-                </p>
+                
               </div>
             </div>
           </div>
@@ -1175,5 +1159,245 @@ const getQuestionClass = (question, index) => {
    
 }
 
+/* =========================================================
+   QUESTION CONTENT
+   ========================================================= */
 
+.question-section,
+.question-content {
+  width: 100%;
+  max-width: 100%;
+  color: #24304a;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Section / instruction */
+.question-section {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+/* Main question */
+.question-content {
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.7;
+}
+
+/* =========================================================
+   HTML GENERATED BY v-html
+   ========================================================= */
+
+.question-section :deep(*),
+.question-content :deep(*) {
+  max-width: 100%;
+}
+
+/* Paragraphs */
+.question-section :deep(p),
+.question-content :deep(p) {
+  margin: 0 0 8px;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+/* Last paragraph should not create extra space */
+.question-section :deep(p:last-child),
+.question-content :deep(p:last-child) {
+  margin-bottom: 0;
+}
+
+/* Bold text */
+.question-section :deep(strong),
+.question-section :deep(b),
+.question-content :deep(strong),
+.question-content :deep(b) {
+  font-weight: 700;
+}
+
+/* Italic */
+.question-section :deep(em),
+.question-section :deep(i),
+.question-content :deep(em),
+.question-content :deep(i) {
+  font-style: italic;
+}
+
+/* Headings inside question HTML */
+.question-section :deep(h1),
+.question-section :deep(h2),
+.question-section :deep(h3),
+.question-section :deep(h4),
+.question-content :deep(h1),
+.question-content :deep(h2),
+.question-content :deep(h3),
+.question-content :deep(h4) {
+  margin: 8px 0;
+  color: #24304a;
+  font-size: inherit;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+/* =========================================================
+   LISTS
+   ========================================================= */
+
+.question-section :deep(ul),
+.question-content :deep(ul) {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style: disc;
+}
+
+.question-section :deep(ol),
+.question-content :deep(ol) {
+  margin: 8px 0;
+  padding-left: 24px;
+  list-style: decimal;
+}
+
+.question-section :deep(li),
+.question-content :deep(li) {
+  margin-bottom: 4px;
+  padding-left: 2px;
+}
+
+/* =========================================================
+   IMAGES
+   ========================================================= */
+
+.question-section :deep(img),
+.question-content :deep(img) {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 10px auto;
+  object-fit: contain;
+}
+
+/* =========================================================
+   TABLES
+   ========================================================= */
+
+.question-section :deep(table),
+.question-content :deep(table) {
+  width: 100%;
+  max-width: 100%;
+  margin: 10px 0;
+  border-collapse: collapse;
+  overflow-x: auto;
+  font-size: 14px;
+}
+
+.question-section :deep(th),
+.question-section :deep(td),
+.question-content :deep(th),
+.question-content :deep(td) {
+  padding: 7px 9px;
+  border: 1px solid #d9dde5;
+  text-align: left;
+  vertical-align: top;
+}
+
+.question-section :deep(th),
+.question-content :deep(th) {
+  font-weight: 700;
+  background: #f6f3ec;
+}
+
+/* =========================================================
+   SUPERSCRIPT / SUBSCRIPT
+   ========================================================= */
+
+.question-section :deep(sup),
+.question-content :deep(sup) {
+  font-size: 0.7em;
+  vertical-align: super;
+}
+
+.question-section :deep(sub),
+.question-content :deep(sub) {
+  font-size: 0.7em;
+  vertical-align: sub;
+}
+
+/* =========================================================
+   CODE / PRE
+   ========================================================= */
+
+.question-section :deep(code),
+.question-content :deep(code) {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.question-section :deep(pre),
+.question-content :deep(pre) {
+  max-width: 100%;
+  margin: 10px 0;
+  padding: 10px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #f4f4f4;
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+  .question-section {
+    font-size: 13px;
+    line-height: 1.55;
+  }
+
+  .question-content {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .question-section :deep(p),
+  .question-content :deep(p) {
+    margin-bottom: 6px;
+  }
+
+  .question-section :deep(table),
+  .question-content :deep(table) {
+    display: block;
+    overflow-x: auto;
+    white-space: normal;
+  }
+
+  .question-section :deep(img),
+  .question-content :deep(img) {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+/* =========================================================
+   LARGER SCREENS
+   ========================================================= */
+
+@media (min-width: 640px) {
+  .question-section {
+    font-size: 15px;
+  }
+
+  .question-content {
+    font-size: 17px;
+    line-height: 1.7;
+  }
+}
 </style>

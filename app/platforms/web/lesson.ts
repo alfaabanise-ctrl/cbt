@@ -7,6 +7,14 @@ export interface Subject {
   topics: Topic[]
 }
 
+export interface AvailableSubject {
+  id: string
+  name: string
+  icon?: string
+  topicCount: number
+  lessonCount: number
+}
+
 export interface Topic {
   id: string
   subjectId: string
@@ -85,6 +93,41 @@ export async function getSidebar(): Promise<Subject[]> {
   }
 
   return response.data ?? []
+}
+
+export async function getSubjects(): Promise<AvailableSubject[]> {
+  const subjects = await getSidebar()
+
+  return subjects.map((subject) => ({
+    id: subject.id,
+    name: subject.name,
+    icon: subject.icon,
+    topicCount: subject.topics.length,
+    lessonCount: subject.topics.reduce(
+      (total, topic) => total + topic.lessons.length,
+      0
+    ),
+  }))
+}
+
+export async function getSubject(
+  idOrName: string
+): Promise<Subject | null> {
+  const key = String(idOrName ?? "").trim()
+  if (!key) {
+    throw new Error("Subject id or name is required")
+  }
+
+  const normalizeName = (value: string) =>
+    value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
+  const subjects = await getSidebar()
+
+  return subjects.find((subject) => {
+    return (
+      subject.id === key ||
+      normalizeName(subject.name) === normalizeName(key)
+    )
+  }) ?? null
 }
 
 
@@ -323,6 +366,5 @@ export async function importCurriculum(
 
   return response.data
 }
-
 
 

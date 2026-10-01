@@ -31,19 +31,19 @@ export default defineNuxtPlugin(async () => {
     }
 
     // User is not logged in
-    if (!auth.isLoggedIn.value) {
-      console.log("🔒 User is not logged in")
+    // if (!auth.isLoggedIn.value) {
+    //   console.log("🔒 User is not logged in")
 
-      await navigateTo("/activate", {
-        replace: true,
-      })
+    //   await navigateTo("/activate", {
+    //     replace: true,
+    //   })
 
-      return
-    }
+    //   return
+    // }
 
     // User is logged in but license is not activated
    
-await navigateTo("/software-activation", {
+await navigateTo("/", {
         replace: true,
       })
     console.log("✅ Authentication access granted")

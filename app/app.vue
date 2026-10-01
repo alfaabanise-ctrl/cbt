@@ -9,6 +9,7 @@
 <script setup>
 import { computed, onMounted } from "vue"
 import platform from "~/platforms"
+import { initializeDatabases } from "~/utils/databases"
 const auth = useExamTipsAuth();
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { LogicalSize } from "@tauri-apps/api/dpi"
@@ -17,6 +18,16 @@ await auth.initialize()
 const isTauri = computed(() => {
   return import.meta.client && !!window.__TAURI_INTERNALS__
 })
+
+if (import.meta.client && isTauri.value) {
+  const appWindow = getCurrentWindow()
+
+  if (appWindow.label === "main") {
+    await initializeDatabases()
+    await platform.dicDatase.getDictDB()
+    console.log("Tauri databases initialized at startup")
+  }
+}
 
 
 onMounted(async () => {
@@ -33,18 +44,23 @@ onMounted(async () => {
   }
 
   try {
+    const appWindow = getCurrentWindow()
+
     // Only run inside the Tauri desktop application
-  if (import.meta.client && "__TAURI_INTERNALS__" in window) {
-    try {
-      const { invoke } = await import("@tauri-apps/api/core");
+    if (appWindow.label === "splashscreen") {
+      try {
+        const { invoke } = await import("@tauri-apps/api/core")
+        await invoke("show_main_window")
+      } catch (error) {
+        console.error("Failed to show main window:", error)
+      }
 
-      await invoke("show_main_window");
-    } catch (error) {
-      console.error("Failed to show main window:", error);
+      return
     }
-  }
 
-  const appWindow = getCurrentWindow()
+    if (appWindow.label !== "main") {
+      return
+    }
 
     // await appWindow.setSize(
     //   new LogicalSize(390, 844)
@@ -52,14 +68,6 @@ onMounted(async () => {
 
     await appWindow.center()
     await appWindow.setResizable(true)
-    await platform.dicDatase.getDictDB()
-    await platform.database.initializeDatabase()
-    await platform.lesson.initializeLessonsDatabase()
-    // await platform.lesson.getSidebar()
-    console.log("Tauri databases initialized successfully")
-
-      
-    
   } catch (error) {
     console.error("Failed to initialize Tauri databases:", error)
   }

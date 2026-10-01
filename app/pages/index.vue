@@ -60,12 +60,13 @@
               >
                 Unlock Premium Learning
               </span>
-
+            <NuxtLink to="/software-activation">activate</NuxtLink>
+            <NuxtLink to="/indexs">testing</NuxtLink>
               <button
                 type="button"
-                class="rounded-full bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors duration-200 hover:bg-orange-600 sm:px-3 sm:py-2 sm:text-xs"
-                @click="openBook({ component: 'ACTIVATEPRODUCT' })"
-              >
+                class="rounded-full hidden bg-orange-500 px-2.5 py-1.5 text-[10px] font-bold text-white transition-colors duration-200 hover:bg-orange-600 sm:px-3 sm:py-2 sm:text-xs"
+                
+              >@click="openBook({ component: 'ACTIVATEPRODUCT' })"
                 Activate
               </button>
             </div>

@@ -1,7 +1,7 @@
 
 // composables/useCurriculumMigration.ts
 
-import Database from "@tauri-apps/plugin-sql"
+import { getLessonsDB } from "../utils/databases"
 
 export function useCurriculumMigration() {
   const isMigrating = ref(false)
@@ -29,7 +29,7 @@ export function useCurriculumMigration() {
     try {
       console.log("Opening SQLite database...")
 
-      db = await Database.load("sqlite:lessons.db")
+      db = await getLessonsDB()
 
       progress.value = 10
 
@@ -183,4 +183,3 @@ export function useCurriculumMigration() {
     migrateCurriculumToServer,
   }
 }
-

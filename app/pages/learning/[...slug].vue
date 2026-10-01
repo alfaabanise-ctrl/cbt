@@ -1154,13 +1154,11 @@ const selectedSubject = computed(() => {
   if (!subjectSlug) return null;
 
   return (
-    sidebar.value.find((subject: any) => {
-      return (
-        subject.slug === subjectSlug ||
-        String(subject.id) === String(subjectSlug) ||
-        createSlug(subject.name) === subjectSlug
-      );
-    }) || null
+    sidebar.value.find((subject: any) =>
+      subject.slug === subjectSlug ||
+      String(subject.id) === String(subjectSlug) ||
+      createSlug(subject.name) === subjectSlug
+    ) || null
   );
 });
 
@@ -1721,7 +1719,7 @@ const goHome = () => {
 
 const handleReadingVisibility =
   () => {
-    if (document.hidden) {
+    if (document.visibilityState !== "visible" || !document.hasFocus()) {
       stopReadingTimer();
     } else if (currentLesson.value) {
       resetReadingTracker(
@@ -1731,6 +1729,14 @@ const handleReadingVisibility =
       );
     }
   };
+
+const handleReadingWindowBlur = () => {
+  stopReadingTimer();
+};
+
+const handleReadingWindowFocus = () => {
+  handleReadingVisibility();
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -1790,6 +1796,8 @@ onMounted(async () => {
       "visibilitychange",
       handleReadingVisibility,
     );
+    window.addEventListener("blur", handleReadingWindowBlur);
+    window.addEventListener("focus", handleReadingWindowFocus);
   }
 
   await loadSidebar();
@@ -1824,6 +1832,8 @@ onBeforeUnmount(() => {
       "visibilitychange",
       handleReadingVisibility,
     );
+    window.removeEventListener("blur", handleReadingWindowBlur);
+    window.removeEventListener("focus", handleReadingWindowFocus);
   }
 });
 </script>
@@ -1835,4 +1845,3 @@ onBeforeUnmount(() => {
   margin-top: 0.7em;
 }
 </style>
-

@@ -1,5 +1,7 @@
-import Database from "@tauri-apps/plugin-sql"
-import { resolveResource } from "@tauri-apps/api/path"
+import {
+  getLessonsDB as getSharedLessonsDB,
+  initializeLessonsDatabase as initializeSharedLessonsDatabase,
+} from "../../utils/databases"
 
 /**
  * ============================================================
@@ -22,13 +24,8 @@ import { resolveResource } from "@tauri-apps/api/path"
 
 
 type LessonsDatabase = Awaited<
-  ReturnType<typeof Database.load>
+  ReturnType<typeof getSharedLessonsDB>
 >
-
-
-let lessonsDb: LessonsDatabase | null = null
-
-let initializationPromise: Promise<void> | null = null
 
 
 /**
@@ -36,58 +33,9 @@ let initializationPromise: Promise<void> | null = null
  * GET DATABASE CONNECTION
  * ============================================================
  */
-async function getLessonsDB2(): Promise<Database> { 
-      
- 
-     console.log("📦 Resolving lessons.db...")
-      // Get the actual path to the bundled database 
-      const dbPath = await resolveResource("resources/lessons.db") 
-      console.log("📍 lessons.db path:", dbPath)
-       // Open the SQLite database
-        lessonsDb = await Database.load(`sqlite:${dbPath}`) 
-        console.log("✅ lessons.db opened successfully")
-        return lessonsDb 
-      }
-async function getLessonsDB(): Promise<Database> { 
-      const  lessonsDbss = await Database.load("sqlite:lessons.db")
-  if (!lessonsDb) {
-     console.log("📦 Resolving lessons.db...")
-      // Get the actual path to the bundled database 
-      const dbPath = await resolveResource("resources/lessons.db") 
-      console.log("📍 lessons.db path:", dbPath)
-       // Open the SQLite database
-        lessonsDb = await Database.load(`sqlite:${dbPath}`) 
-        console.log("✅ lessons.db opened successfully")
-       } return lessonsDbss 
-      }
-
-// async function getLessonsDB(): Promise<LessonsDatabase> {
-
-//   if (!lessonsDb) {
-
-//     console.log(
-//       "📦 Preparing bundled databases..."
-//     )
-
-//     await initializeBundledDatabases()
-
-
-//     console.log(
-//       "📦 Opening lessons.db..."
-//     )
-
-//     lessonsDb =
-//       await Database.load("sqlite:lessons.db")
-
-
-//     console.log(
-//       "✅ lessons.db opened",
-//       lessonsDb
-//     )
-//   }
-
-//   return lessonsDb
-// }
+function getLessonsDB(): Promise<LessonsDatabase> {
+  return getSharedLessonsDB()
+}
 
 
 /**
@@ -97,91 +45,7 @@ async function getLessonsDB(): Promise<Database> {
  */
 
 export async function ensureTables(): Promise<void> {
-  const db = await getLessonsDB()
-
-  console.log("🛠️ Ensuring lessons.db tables exist...")
-
-
-  /**
-   * SUBJECTS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS subjects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      icon TEXT
-    )
-  `)
-
-
-  /**
-   * TOPICS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS topics (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      topic_number TEXT,
-      title TEXT NOT NULL,
-      order_index INTEGER NOT NULL
-    )
-  `)
-
-    await db.execute(`
-    CREATE TABLE IF NOT EXISTS topics (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      topic_number TEXT,
-      title TEXT NOT NULL,
-      order_index INTEGER NOT NULL
-    )
-  `)
-
-
-  /**
-   * LESSONS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS lessons (
-      id TEXT PRIMARY KEY,
-      topic_id TEXT NOT NULL,
-      subject_id TEXT NOT NULL,
-      topic_number TEXT,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      summary TEXT,
-      blocks TEXT,
-      search_text TEXT,
-      order_index INTEGER NOT NULL
-    )
-  `)
-
-
-  /**
-   * Indexes
-   */
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_topics_subject_id
-    ON topics(subject_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_topic_id
-    ON lessons(topic_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_subject_id
-    ON lessons(subject_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_order_index
-    ON lessons(order_index)
-  `)
-
-
-  console.log("✅ lessons.db tables ready")
+  await initializeSharedLessonsDatabase()
 }
 
  
@@ -234,42 +98,7 @@ export async function debugLessonsDB() {
  * the database simultaneously.
  */
 export function initializeLessonsDatabase(): Promise<void> {
-
-  if (!initializationPromise) {
-
-    initializationPromise = ensureTables()    
-      .then(async () => {
-
-        console.log(
-          "🎓 lessons.db initialized successfully"
-        )
-
-        const tables = await getDatabaseTables()
-
-        console.log(
-          "📋 lessons.db tables:",
-          tables
-        )
-
-      })
-      .catch((error) => {
-
-        console.error(
-          "❌ lessons.db initialization failed:",
-          error
-        )
-
-        /**
-         * Allow another initialization attempt if
-         * initialization failed.
-         */
-        initializationPromise = null
-
-        throw error
-      })
-  }
-
-  return initializationPromise
+  return initializeSharedLessonsDatabase()
 }
 
 
@@ -341,46 +170,7 @@ export async function getRawSubjectsCount(): Promise<number> {
  * GET SIDEBAR
  * ============================================================
  */
-export async function marginData(){
-   const db2 = await getLessonsDB2()
 
-   const subjects2 = await db2.select<{
-      id: number | string
-      name: string
-      icon: string | null
-    }[]>(`
-      SELECT *
-      FROM subjects
-      ORDER BY id
-    `)
-
-     const topics2 = await db2.select<{
-      id: string
-      subject_id: string
-      title: string
-      order_index: number
-    }[]>(`
-      SELECT *
-      FROM topics
-      ORDER BY subject_id, order_index
-    `)
-         const lessons2 = await db2.select<{
-      id: string
-      topic_id: string
-      subject_id: string
-      slug: string
-      title: string
-      order_index: number
-    }[]>(`
-      SELECT *
-      FROM lessons
-      ORDER BY topic_id, order_index
-    `)
-
-
-   
-
-}
 // export async function getSidebar() {
 
 //   const db = await readyLessonsDB()
@@ -776,19 +566,11 @@ export async function getSidebar() {
     // ============================================================
 
     const db = await readyLessonsDB()
-    const db2 = await getLessonsDB2()
+
 
     console.log("📦 Loading sidebar data...")
 
 
-
-    console.log("🧹 TEST MODE: Clearing Database 1...")
-
-    await db.execute("DELETE FROM lessons")
-    await db.execute("DELETE FROM topics")
-    await db.execute("DELETE FROM subjects")
-
-    console.log("✅ Database 1 is completely empty")
 
     // ============================================================
     // DATABASE 1 — SUBJECTS
@@ -830,9 +612,8 @@ export async function getSidebar() {
 
     // ============================================================
     // DATABASE 1 — LESSONS
-    // IMPORTANT:
-    // Get ALL lesson fields, especially blocks.
-    // ============================================================
+    // Only load the metadata needed to render the sidebar.
+    // Full lesson blocks are loaded by getLesson().
 
     let lessons = await db.select<{
       id: string
@@ -842,8 +623,6 @@ export async function getSidebar() {
       slug: string
       title: string
       summary: string | null
-      blocks: string | null
-      search_text: string | null
       order_index: number
     }[]>(`
       SELECT
@@ -854,8 +633,6 @@ export async function getSidebar() {
         slug,
         title,
         summary,
-        blocks,
-        search_text,
         order_index
       FROM lessons
       ORDER BY topic_id, order_index
@@ -871,334 +648,25 @@ export async function getSidebar() {
     // COPY EVERYTHING FROM DATABASE 2
     // ============================================================
 
-    if (subjects.length === 0) {
-      console.warn(
-        "⚠️ Database 1 is empty. Loading data from bundled Database 2..."
-      )
-
-      // ==========================================================
-      // DATABASE 2 — SUBJECTS
-      // ==========================================================
-
-      const subjects2 = await db2.select<{
-        id: string | number
-        name: string
-        icon: string | null
-      }[]>(`
-        SELECT
-          id,
-          name,
-          icon
-        FROM subjects
-        ORDER BY id
-      `)
-
-      // ==========================================================
-      // DATABASE 2 — TOPICS
-      // ==========================================================
-
-      const topics2 = await db2.select<{
-        id: string
-        subject_id: string
-        topic_number: string | null
-        title: string
-        order_index: number
-      }[]>(`
-        SELECT
-          id,
-          subject_id,
-          topic_number,
-          title,
-          order_index
-        FROM topics
-        ORDER BY subject_id, order_index
-      `)
-
-      // ==========================================================
-      // DATABASE 2 — LESSONS
-      //
-      // GET ALL FIELDS INCLUDING BLOCKS
-      // ==========================================================
-
-      const lessons2 = await db2.select<{
-        id: string
-        topic_id: string
-        subject_id: string
-        topic_number: string | null
-        slug: string
-        title: string
-        summary: string | null
-        blocks: string | null
-        search_text: string | null
-        order_index: number
-      }[]>(`
-        SELECT
-          id,
-          topic_id,
-          subject_id,
-          topic_number,
-          slug,
-          title,
-          summary,
-          blocks,
-          search_text,
-          order_index
-        FROM lessons
-        ORDER BY topic_id, order_index
-      `)
-
-      console.log("📦 DATABASE 2:")
-      console.log("Subjects:", subjects2.length)
-      console.log("Topics:", topics2.length)
-      console.log("Lessons:", lessons2.length)
-
-      // ==========================================================
-      // CHECK DATABASE 2
-      // ==========================================================
-
-      if (subjects2.length === 0) {
-        console.warn(
-          "⚠️ Database 2 is also empty."
-        )
-
-        return []
-      }
-
-      // ==========================================================
-      // START TRANSACTION
-      // ==========================================================
-
-      await db.execute("BEGIN TRANSACTION")
-
-      try {
-
-        // ========================================================
-        // COPY SUBJECTS
-        // ========================================================
-
-        for (const subject of subjects2) {
-
-          await db.execute(
-            `
-            INSERT OR REPLACE INTO subjects (
-              id,
-              name,
-              icon
-            )
-            VALUES (?, ?, ?)
-            `,
-            [
-              subject.id,
-              subject.name,
-              subject.icon
-            ]
-          )
-
-        }
-
-        console.log(
-          `✅ Copied ${subjects2.length} subjects`
-        )
-
-        // ========================================================
-        // COPY TOPICS
-        // ========================================================
-
-        for (const topic of topics2) {
-
-          await db.execute(
-            `
-            INSERT OR REPLACE INTO topics (
-              id,
-              subject_id,
-              topic_number,
-              title,
-              order_index
-            )
-            VALUES (?, ?, ?, ?, ?)
-            `,
-            [
-              topic.id,
-              topic.subject_id,
-              topic.topic_number,
-              topic.title,
-              topic.order_index
-            ]
-          )
-
-        }
-
-        console.log(
-          `✅ Copied ${topics2.length} topics`
-        )
-
-        // ========================================================
-        // COPY LESSONS
-        //
-        // THIS COPIES EVERYTHING:
-        //
-        // id
-        // topic_id
-        // subject_id
-        // topic_number
-        // slug
-        // title
-        // summary
-        // blocks
-        // search_text
-        // order_index
-        // ========================================================
-
-        for (const lesson of lessons2) {
-
-          await db.execute(
-            `
-            INSERT OR REPLACE INTO lessons (
-              id,
-              topic_id,
-              subject_id,
-              topic_number,
-              slug,
-              title,
-              summary,
-              blocks,
-              search_text,
-              order_index
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `,
-            [
-              lesson.id,
-              lesson.topic_id,
-              lesson.subject_id,
-              lesson.topic_number,
-              lesson.slug,
-              lesson.title,
-              lesson.summary,
-              lesson.blocks,
-              lesson.search_text,
-              lesson.order_index
-            ]
-          )
-
-        }
-
-        console.log(
-          `✅ Copied ${lessons2.length} lessons`
-        )
-
-        // ========================================================
-        // COMMIT
-        // ========================================================
-
-        await db.execute("COMMIT")
-
-        console.log(
-          "🎉 Database 2 successfully copied into Database 1"
-        )
-
-      } catch (copyError) {
-
-        // ========================================================
-        // ROLLBACK IF COPY FAILS
-        // ========================================================
-
-        await db.execute("ROLLBACK")
-
-        console.error(
-          "❌ Database copy failed:",
-          copyError
-        )
-
-        throw copyError
-      }
-
-      // ==========================================================
-      // RELOAD DATABASE 1 AFTER COPYING
-      // ==========================================================
-
-      subjects = await db.select<{
-        id: string | number
-        name: string
-        icon: string | null
-      }[]>(`
-        SELECT
-          id,
-          name,
-          icon
-        FROM subjects
-        ORDER BY id
-      `)
-
-      topics = await db.select<{
-        id: string
-        subject_id: string
-        topic_number: string | null
-        title: string
-        order_index: number
-      }[]>(`
-        SELECT
-          id,
-          subject_id,
-          topic_number,
-          title,
-          order_index
-        FROM topics
-        ORDER BY subject_id, order_index
-      `)
-
-      // ==========================================================
-      // RELOAD LESSONS WITH ALL CONTENT
-      // ==========================================================
-
-      lessons = await db.select<{
-        id: string
-        topic_id: string
-        subject_id: string
-        topic_number: string | null
-        slug: string
-        title: string
-        summary: string | null
-        blocks: string | null
-        search_text: string | null
-        order_index: number
-      }[]>(`
-        SELECT
-          id,
-          topic_id,
-          subject_id,
-          topic_number,
-          slug,
-          title,
-          summary,
-          blocks,
-          search_text,
-          order_index
-        FROM lessons
-        ORDER BY topic_id, order_index
-      `)
-
-      console.log("🔄 Database 1 reloaded")
-
-      console.log(
-        "Subjects:",
-        subjects.length
-      )
-
-      console.log(
-        "Topics:",
-        topics.length
-      )
-
-      console.log(
-        "Lessons:",
-        lessons.length
-      )
-    }
-
     // ============================================================
     // BUILD SIDEBAR TREE
     // ============================================================
+
+    const topicsBySubject = new Map<string, typeof topics>()
+    for (const topic of topics) {
+      const subjectId = String(topic.subject_id).trim()
+      const subjectTopics = topicsBySubject.get(subjectId) ?? []
+      subjectTopics.push(topic)
+      topicsBySubject.set(subjectId, subjectTopics)
+    }
+
+    const lessonsByTopic = new Map<string, typeof lessons>()
+    for (const lesson of lessons) {
+      const topicId = String(lesson.topic_id).trim()
+      const topicLessons = lessonsByTopic.get(topicId) ?? []
+      topicLessons.push(lesson)
+      lessonsByTopic.set(topicId, topicLessons)
+    }
 
     const result = subjects.map((subject) => {
 
@@ -1210,15 +678,7 @@ export async function getSidebar() {
       // GET TOPICS FOR THIS SUBJECT
       // ==========================================================
 
-      const subjectTopics = topics
-        .filter((topic) => {
-
-          return (
-            subjectId ===
-            String(topic.subject_id).trim()
-          )
-
-        })
+      const subjectTopics = (topicsBySubject.get(subjectId) ?? [])
 
         // ========================================================
         // BUILD TOPIC
@@ -1231,21 +691,10 @@ export async function getSidebar() {
           ).trim()
 
           // ======================================================
-          // GET ALL LESSONS FOR THIS TOPIC
-          //
-          // IMPORTANT:
-          // We DO NOT remove blocks here.
+          // GET LESSON METADATA FOR THIS TOPIC
           // ======================================================
 
-          const topicLessons = lessons
-            .filter((lesson) => {
-
-              return (
-                topicId ===
-                String(lesson.topic_id).trim()
-              )
-
-            })
+          const topicLessons = (lessonsByTopic.get(topicId) ?? [])
 
             // ====================================================
             // RETURN COMPLETE LESSON
@@ -1267,14 +716,6 @@ export async function getSidebar() {
                 title: lesson.title,
 
                 summary: lesson.summary,
-
-                // ==============================================
-                // KEEP THE COMPLETE BLOCKS
-                // ==============================================
-
-                blocks: lesson.blocks,
-
-                search_text: lesson.search_text,
 
                 order_index: lesson.order_index
               }
@@ -1349,77 +790,6 @@ export async function getSidebar() {
       )
     )
 
-    // ============================================================
-    // CHECK BLOCKS
-    // ============================================================
-
-    const totalBlocks = result.reduce(
-      (subjectTotal, subject) => {
-
-        return (
-          subjectTotal +
-          subject.topics.reduce(
-            (topicTotal, topic) => {
-
-              return (
-                topicTotal +
-                topic.lessons.reduce(
-                  (lessonTotal, lesson) => {
-
-                    if (!lesson.blocks) {
-                      return lessonTotal
-                    }
-
-                    try {
-
-                      const parsedBlocks =
-                        typeof lesson.blocks === "string"
-                          ? JSON.parse(lesson.blocks)
-                          : lesson.blocks
-
-                      if (Array.isArray(parsedBlocks)) {
-                        return (
-                          lessonTotal +
-                          parsedBlocks.length
-                        )
-                      }
-
-                      return lessonTotal + 1
-
-                    } catch {
-
-                      return lessonTotal + 1
-
-                    }
-
-                  },
-                  0
-                )
-              )
-
-            },
-            0
-          )
-        )
-
-      },
-      0
-    )
-
-    console.log(
-      "🧱 TOTAL LESSON BLOCKS:",
-      totalBlocks
-    )
-
-    // ============================================================
-    // FINAL SIDEBAR
-    // ============================================================
-
-    console.log(
-      "🌳 FINAL SIDEBAR:",
-      JSON.stringify(result, null, 2)
-    )
-
     return result
 
   } catch (error) {
@@ -1433,7 +803,49 @@ export async function getSidebar() {
   }
 }
 
+export interface AvailableSubject {
+  id: string
+  name: string
+  icon: string | null
+  topicCount: number
+  lessonCount: number
+}
 
+export async function getSubjects(): Promise<AvailableSubject[]> {
+  const db = await readyLessonsDB()
+
+  return db.select<AvailableSubject[]>(`
+    SELECT
+      s.id,
+      s.name,
+      s.icon,
+      COUNT(DISTINCT t.id) AS topicCount,
+      COUNT(DISTINCT l.id) AS lessonCount
+    FROM subjects s
+    LEFT JOIN topics t ON t.subject_id = s.id
+    LEFT JOIN lessons l ON l.topic_id = t.id
+    GROUP BY s.id, s.name, s.icon
+    ORDER BY s.order_index, s.name
+  `)
+}
+
+export async function getSubject(idOrName: string) {
+  const key = String(idOrName ?? "").trim()
+  if (!key) {
+    throw new Error("Subject id or name is required")
+  }
+
+  const subjects = await getSidebar()
+  const normalizedName = (value: string) =>
+    value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-")
+
+  return subjects.find((subject: any) => {
+    return (
+      String(subject.id) === key ||
+      normalizedName(subject.name) === normalizedName(key)
+    )
+  }) ?? null
+}
 
 
 

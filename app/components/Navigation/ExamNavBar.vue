@@ -243,6 +243,7 @@
 <script setup>
 import { computed, ref } from "vue"
 import { useBookmarks } from "~/composables/useBookmarks"
+import { durationToSeconds } from "~/utils/examTime"
 
 const appState = useAppState()
 
@@ -298,46 +299,7 @@ const currentUser = computed(() => {
 
 const examDuration = computed(() => {
   const duration = appState.value?.examSettings?.duration
-
-  if (!duration) {
-    return 3600
-  }
-
-  if (typeof duration === "number") {
-    return duration
-  }
-
-  if (typeof duration === "string") {
-    const parts = duration.split(":").map(Number)
-
-    // HH:MM:SS
-    if (parts.length === 3) {
-      const [hours, minutes, seconds] = parts
-
-      return (
-        (hours || 0) * 3600 +
-        (minutes || 0) * 60 +
-        (seconds || 0)
-      )
-    }
-
-    // MM:SS
-    if (parts.length === 2) {
-      const [minutes, seconds] = parts
-
-      return (minutes || 0) * 60 + (seconds || 0)
-    }
-
-    // Seconds
-    if (
-      parts.length === 1 &&
-      !Number.isNaN(parts[0])
-    ) {
-      return parts[0]
-    }
-  }
-
-  return 3600
+  return durationToSeconds(duration)
 })
 
 // ==========================================

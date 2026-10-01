@@ -20,7 +20,7 @@
           <div class="bg-primary text-white px-6 py-4 flex justify-between items-center">
             <div>
               <h2 class="text-lg font-bold">
-               {{modelTopics}}
+             
               </h2>
 
               <p class="text-sm text-white/80">
@@ -37,15 +37,7 @@
           </div>
 
           <!-- Search -->
-          <div class="border-b p-4">
-
-            <input
-              v-model="search"
-              class="w-full border rounded-lg px-4 py-2"
-              placeholder="Search topic..."
-            >
-
-          </div>
+        
 
           <!-- Select All -->
           <div class="p-4 border-b flex justify-between">

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-import Database from "@tauri-apps/plugin-sql"
+import { getLessonsDB } from "~/utils/databases"
 
 // ------------------------------------------
 // STATE
@@ -35,9 +35,7 @@ async function migrateCurriculum() {
 
     console.log("Opening SQLite database...")
 
-    const db = await Database.load(
-      "sqlite:lessons.db"
-    )
+    const db = await getLessonsDB()
 
     progress.value = 10
 

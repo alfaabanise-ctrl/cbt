@@ -1,4 +1,5 @@
 import { ref, computed, watch } from 'vue'
+import platform from '~/platforms'
 
 /* =========================================================
    TYPES
@@ -10,6 +11,8 @@ export interface ClassroomSubject {
   name: string
   icon?: string
   color?: string
+  topicCount?: number
+  lessonCount?: number
   [key: string]: any
 }
 
@@ -46,6 +49,21 @@ const progressData = useState<Record<string, SubjectProgress>>(
 const isLoaded = useState<boolean>(
   'classroom-is-loaded',
   () => false
+)
+
+const availableSubjects = useState<ClassroomSubject[]>(
+  'classroom-available-subjects',
+  () => []
+)
+
+const availableSubjectsLoading = useState<boolean>(
+  'classroom-available-subjects-loading',
+  () => false
+)
+
+const availableSubjectsError = useState<string>(
+  'classroom-available-subjects-error',
+  () => ''
 )
 
 /* =========================================================
@@ -118,6 +136,11 @@ const getLessonsFromSubject = (subject: any): any[] => {
   return []
 }
 
+const getSubjectLessonCount = (subject: any): number => {
+  const lessons = getLessonsFromSubject(subject)
+  return lessons.length || Math.max(0, Number(subject?.lessonCount) || 0)
+}
+
 /* =========================================================
    SAVE CURRENT USER DATA
 ========================================================= */
@@ -186,6 +209,43 @@ const loadUserClassroom = (user: string): void => {
 
 export const useClassroom = () => {
   const appState = useAppState()
+
+  const loadAvailableSubjects = async (): Promise<void> => {
+    availableSubjectsLoading.value = true
+    availableSubjectsError.value = ''
+
+    try {
+      const subjects = await platform.lesson.getSubjects()
+      availableSubjects.value = subjects
+
+      const subjectsById = new Map(
+        subjects.map((subject) => [normalizeId(subject.id), subject])
+      )
+
+      studySubjects.value = studySubjects.value.map((selectedSubject) => {
+        const availableSubject = subjectsById.get(
+          getSubjectId(selectedSubject)
+        )
+        return availableSubject
+          ? { ...selectedSubject, ...availableSubject }
+          : selectedSubject
+      })
+
+      studySubjects.value.forEach((subject) => {
+        const count = getSubjectLessonCount(subject)
+        if (count > 0) {
+          setSubjectTotalLessons(getSubjectId(subject), count)
+        }
+      })
+    } catch (error) {
+      console.error('Failed to load subjects from lessons database:', error)
+      availableSubjects.value = []
+      availableSubjectsError.value =
+        error instanceof Error ? error.message : String(error)
+    } finally {
+      availableSubjectsLoading.value = false
+    }
+  }
 
   /* ---------------------------------------------
      Keep classroom synced with selected user
@@ -510,7 +570,7 @@ export const useClassroom = () => {
     */
 
     if (!totalLessons && subject) {
-      totalLessons = getLessonsFromSubject(subject).length
+      totalLessons = getSubjectLessonCount(subject)
     }
 
     const completedLessons =
@@ -551,10 +611,10 @@ export const useClassroom = () => {
 
       if (!id) return
 
-      const lessons = getLessonsFromSubject(subject)
+      const lessonCount = getSubjectLessonCount(subject)
 
-      if (lessons.length > 0) {
-        setSubjectTotalLessons(id, lessons.length)
+      if (lessonCount > 0) {
+        setSubjectTotalLessons(id, lessonCount)
       }
     })
 
@@ -572,8 +632,7 @@ export const useClassroom = () => {
       const savedTotal =
         progressData.value[id]?.totalLessons || 0
 
-      const calculatedTotal =
-        getLessonsFromSubject(subject).length
+      const calculatedTotal = getSubjectLessonCount(subject)
 
       return total + Math.max(savedTotal, calculatedTotal)
     }, 0)
@@ -642,9 +701,13 @@ export const useClassroom = () => {
   return {
     currentUser,
     studySubjects,
+    availableSubjects,
+    availableSubjectsLoading,
+    availableSubjectsError,
     progressData,
     isLoaded,
 
+    loadAvailableSubjects,
     loadClassroom,
     loadAllProgress,
     saveClassroom,

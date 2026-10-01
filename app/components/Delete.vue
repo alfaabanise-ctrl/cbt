@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import Database from '@tauri-apps/plugin-sql'
+import { getLessonsDB } from '~/utils/databases'
 
 const props = defineProps<{
   type: 'subject' | 'topic'
@@ -22,16 +22,6 @@ const label = computed(() => {
     : 'Topic'
 })
 
-let db: any = null
-
-async function getDB() {
-  if (db) return db
-
-  db = await Database.load('sqlite:lessons.db')
-
-  return db
-}
- 
 async function deleteSubject(database: any) {
   const subjects = await database.select(
     `
@@ -127,7 +117,7 @@ const deleteItem = async () => {
   error.value = ''
 
   try {
-    const database = await getDB()
+    const database = await getLessonsDB()
 
     if (props.type === 'subject') {
       await deleteSubject(database)

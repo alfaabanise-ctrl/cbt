@@ -11,6 +11,7 @@ export const useLessonProgress = () => {
   const readingSeconds = ref(0)
   const estimatedReadingMinutes = ref(1)
   const readingTimer = ref<ReturnType<typeof setInterval> | null>(null)
+  const lastActiveTickAt = ref(0)
   const readingCompleted = ref(false)
 
   /*
@@ -439,7 +440,16 @@ export const useLessonProgress = () => {
       readingTimer.value = null
     }
 
+    lastActiveTickAt.value = 0
     flushReadingTime()
+  }
+
+  const isReadingPageActive = () => {
+    return (
+      import.meta.client &&
+      document.visibilityState === 'visible' &&
+      document.hasFocus()
+    )
   }
 
   const startReadingTimer = (
@@ -462,19 +472,31 @@ export const useLessonProgress = () => {
     }
 
     readingTimer.value = setInterval(() => {
-      if (
-        document.hidden ||
-        readingCompleted.value
-      ) {
+      if (readingCompleted.value) {
         return
       }
 
-      readingSeconds.value += 1
+      if (!isReadingPageActive()) {
+        lastActiveTickAt.value = 0
+        return
+      }
+
+      const now = Date.now()
+      const elapsedSeconds = lastActiveTickAt.value
+        ? Math.floor((now - lastActiveTickAt.value) / 1000)
+        : 1
+
+      if (elapsedSeconds <= 0) {
+        return
+      }
+
+      lastActiveTickAt.value = now
+      readingSeconds.value += elapsedSeconds
 
       addReadingTime(
         subjectSlug,
         lesson,
-        1
+        elapsedSeconds
       )
 
       if (

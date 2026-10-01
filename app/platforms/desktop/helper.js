@@ -1,5 +1,9 @@
 import Database from "@tauri-apps/plugin-sql"
 import { resolveResource } from "@tauri-apps/api/path"
+import {
+  getLessonsDB as getSharedLessonsDB,
+  initializeLessonsDatabase as initializeSharedLessonsDatabase,
+} from "../../utils/databases"
 
 /**
  * ============================================================
@@ -11,31 +15,14 @@ type LessonsDatabase = Awaited<
   ReturnType<typeof Database.load>
 >
 
-let lessonsDb: LessonsDatabase | null = null
-let initializationPromise: Promise<void> | null = null
-
 /**
  * ============================================================
  * DATABASE 1 — APPLICATION DATABASE
  * ============================================================
  */
 
-async function getLessonsDB(): Promise<LessonsDatabase> {
-
-  if (!lessonsDb) {
-
-    console.log("📦 Opening application lessons.db...")
-
-    lessonsDb = await Database.load(
-      "sqlite:lessons.db"
-    )
-
-    console.log(
-      "✅ Application lessons.db opened"
-    )
-  }
-
-  return lessonsDb
+function getLessonsDB(): Promise<LessonsDatabase> {
+  return getSharedLessonsDB()
 }
 
 /**
@@ -82,82 +69,7 @@ async function getBundledLessonsDB(): Promise<LessonsDatabase> {
  */
 
 async function ensureTables(): Promise<void> {
-
-  const db = await getLessonsDB()
-
-  console.log(
-    "🛠️ Creating lessons.db tables..."
-  )
-
-  /**
-   * SUBJECTS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS subjects (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      icon TEXT
-    )
-  `)
-
-  /**
-   * TOPICS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS topics (
-      id TEXT PRIMARY KEY,
-      subject_id TEXT NOT NULL,
-      topic_number TEXT,
-      title TEXT NOT NULL,
-      order_index INTEGER NOT NULL
-    )
-  `)
-
-  /**
-   * LESSONS
-   */
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS lessons (
-      id TEXT PRIMARY KEY,
-      topic_id TEXT NOT NULL,
-      subject_id TEXT NOT NULL,
-      topic_number TEXT,
-      slug TEXT UNIQUE NOT NULL,
-      title TEXT NOT NULL,
-      summary TEXT,
-      blocks TEXT,
-      search_text TEXT,
-      order_index INTEGER NOT NULL
-    )
-  `)
-
-  /**
-   * INDEXES
-   */
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_topics_subject_id
-    ON topics(subject_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_topic_id
-    ON lessons(topic_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_subject_id
-    ON lessons(subject_id)
-  `)
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS idx_lessons_order_index
-    ON lessons(order_index)
-  `)
-
-  console.log(
-    "✅ lessons.db tables ready"
-  )
+  await initializeSharedLessonsDatabase()
 }
 
 /**
@@ -493,73 +405,8 @@ async function loadBundledLessons(): Promise<void> {
  * ============================================================
  */
 
-const TEST_MODE = true
-
 export function initializeLessonsDatabase(): Promise<void> {
-
-  if (!initializationPromise) {
-
-    initializationPromise = (async () => {
-
-      console.log(
-        "🚀 Initializing lessons database..."
-      )
-
-      /**
-       * 1. Create tables
-       */
-      await ensureTables()
-
-      /**
-       * 2. TESTING
-       *
-       * Empty local database first.
-       */
-      if (TEST_MODE) {
-
-        console.log(
-          "🧪 TEST MODE ENABLED"
-        )
-
-        await clearLessonsDatabase()
-
-        /**
-         * Optional:
-         * Load bundled data after clearing.
-         *
-         * If you want the database to remain EMPTY
-         * for testing importer, comment this out.
-         */
-        // await loadBundledLessons()
-      }
-
-      /**
-       * 3. Normal startup import
-       *
-       * Uncomment when you want bundled data
-       * automatically loaded.
-       */
-
-      // await loadBundledLessons()
-
-      console.log(
-        "🎓 lessons.db initialization complete"
-      )
-
-    })().catch((error) => {
-
-      console.error(
-        "❌ lessons.db initialization failed:",
-        error
-      )
-
-      initializationPromise = null
-
-      throw error
-    })
-  }
-
-  return initializationPromise
+  return initializeSharedLessonsDatabase()
 }
 
 /**

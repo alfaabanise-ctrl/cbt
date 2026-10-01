@@ -131,26 +131,7 @@
       </section>
 
       <!-- CATEGORY TABS -->
-      <section
-        class="-mx-2 hidden mb-3 overflow-x-auto px-2 scrollbar-hide sm:-mx-3 sm:px-3"
-      >
-        <div class="flex w-max gap-1.5">
-          <button
-            v-for="category in examCategories"
-            :key="category"
-            type="button"
-            @click="activeCategory = category"
-            class="whitespace-nowrap rounded-sm px-2.5 py-1.5 text-[10px] font-medium transition"
-            :class="
-              activeCategory === category
-                ? 'bg-[#4f46e5] text-white shadow-sm'
-                : 'border border-gray-200 bg-white text-gray-500'
-            "
-          >
-            {{ category }}
-          </button>
-        </div>
-      </section>
+    
 
       <!-- SECTION TITLE -->
       <section class="mb-2 flex items-center justify-between">
@@ -198,7 +179,7 @@
       </section>
 
       <!-- SUBJECT CARDS -->
-      <section v-else class="space-y-2 gap-3 grid grid-cols-1 sm:grid-cols-2">
+      <section v-else class="space-y-2 gap-3 grid grid-cols-1 sm:grid-cols-3">
         <article
           v-for="subject in filteredSubjects"
           :key="subject.id"
@@ -220,18 +201,11 @@
             <div class="min-w-0 flex-1">
               <div class="flex items-start justify-between gap-1.5">
                 <div class="min-w-0">
-                  <h3 class="truncate text-xs font-semibold text-gray-900">
+                  <h3 class="truncate text-sm font-semibold text-gray-900">
                     {{ subject.name }}
                   </h3>
 
-                  <p
-                    class="mt-0.5 line-clamp-2 text-[10px] leading-relaxed text-gray-500"
-                  >
-                    {{
-                      subject.description ||
-                      "Practice important topics and improve your examination performance."
-                    }}
-                  </p>
+                
                 </div>
 
                 <button
@@ -240,20 +214,20 @@
                   class="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-gray-50 text-gray-400 transition hover:bg-red-50 hover:text-red-500"
                   title="Remove subject"
                 >
-                  <Icon name="lucide:x" class="h-3 w-3" />
+                  <Icon name="lucide:x" class="h-4 w-4" />
                 </button>
               </div>
 
               <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <span
-                  class="flex items-center gap-1 rounded-sm bg-emerald-50 px-1.5 py-1 text-[9px] font-medium text-emerald-700"
+                  class="flex items-center gap-1 rounded-sm bg-emerald-50 px-1.5 py-1 text-[10px] font-medium text-emerald-700"
                 >
                   <Icon name="lucide:check-circle" class="h-2.5 w-2.5" />
                   Selected
                 </span>
 
                 <span
-                  class="flex items-center gap-1 rounded-sm bg-gray-50 px-1.5 py-1 text-[9px] font-medium text-gray-500"
+                  class="flex items-center gap-1 rounded-sm bg-gray-50 px-1.5 py-1 text-[10px] font-medium text-gray-500"
                 >
                   <Icon name="lucide:file-text" class="h-2.5 w-2.5" />
                   {{ subject.questions }} Questions
@@ -277,7 +251,7 @@
                 <div class="relative">
                   <select
                     v-model="subject.year"
-                    class="w-full appearance-none rounded-sm border border-gray-200 bg-white px-2 py-2 pr-6 text-[10px] font-medium text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/10"
+                    class="w-full appearance-none rounded-sm border border-gray-200 bg-white px-2 py-1 pr-6 text-sm font-medium text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/10"
                   >
                     <option value="all">All Years</option>
 
@@ -309,7 +283,7 @@
                 <div class="relative">
                   <select
                     v-model="subject.questions"
-                    class="w-full appearance-none rounded-sm border border-gray-200 bg-white px-2 py-2 pr-6 text-[10px] font-medium text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/10"
+                    class="w-full appearance-none rounded-sm border border-gray-200 bg-white px-2 py-2 pr-6 text-[11px] font-medium text-gray-700 outline-none focus:border-indigo-400 focus:ring-1 focus:ring-indigo-500/10"
                   >
                     <option
                       v-for="number in subject.questionOptions"
@@ -368,7 +342,7 @@
 
       <!-- USER PROFILE -->
       <section
-        class="mt-3 rounded-sm border border-gray-200 bg-white p-2.5 shadow-sm"
+        class="mt-3 hidden rounded-sm border border-gray-200 bg-white p-2.5 shadow-sm"
       >
         <div class="mb-2 flex items-center gap-1.5">
           <div
@@ -404,6 +378,7 @@
           />
         </datalist>
       </section>
+   
 
       <!-- EXAM SETTINGS -->
       <section class="mt-3">
@@ -423,7 +398,7 @@
               <h3 class="text-xs font-semibold text-gray-900">Exam Settings</h3>
 
               <p class="mt-0.5 text-[10px] text-gray-500">
-                {{ examModeLabel }} · {{ examDuration }}
+                {{ examModeLabel }} · {{ formatDurationLabel(examDuration) }}
               </p>
             </div>
           </div>
@@ -468,19 +443,38 @@
               Exam Duration
             </label>
 
-            <div class="relative">
-              <Icon
-                name="lucide:timer"
-                class="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-              />
+            <div class="grid grid-cols-2 gap-2">
+              <label class="text-[10px] font-medium text-gray-500">
+                Hours
+                <select
+                  v-model.number="examDurationHours"
+                  class="mt-1 w-full rounded-sm border border-gray-200 bg-gray-50 px-2 py-2 text-xs font-medium text-gray-700 outline-none focus:border-indigo-400 focus:bg-white"
+                >
+                  <option v-for="hour in durationHours" :key="hour" :value="hour">
+                    {{ String(hour).padStart(2, "0") }} hr
+                  </option>
+                </select>
+              </label>
 
-              <input
-                v-model="examDuration"
-                type="time"
-                step="60"
-                class="w-full rounded-sm border border-gray-200 bg-gray-50 py-2 pl-8 pr-2 text-[11px] font-medium text-gray-700 outline-none focus:border-indigo-400 focus:bg-white"
-              />
+              <label class="text-[10px] font-medium text-gray-500">
+                Minutes
+                <select
+                  v-model.number="examDurationMinutes"
+                  class="mt-1 w-full rounded-sm border border-gray-200 bg-gray-50 px-2 py-2 text-xs font-medium text-gray-700 outline-none focus:border-indigo-400 focus:bg-white"
+                >
+                  <option
+                    v-for="minute in durationMinutes"
+                    :key="minute"
+                    :value="minute"
+                  >
+                    {{ String(minute).padStart(2, "0") }} min
+                  </option>
+                </select>
+              </label>
             </div>
+            <p class="mt-1 text-[10px] text-gray-500">
+              Duration: {{ formatDurationLabel(examDuration) }}
+            </p>
           </div>
 
           <!-- SHUFFLE QUESTIONS -->
@@ -667,35 +661,49 @@
 
     <!-- SUBJECT SELECTOR -->
     <SelectSubject
-      v-model="showSubjectModal"
-      v-model:modelSubjects="selectedSubjects"
-    />
+  v-model="showSubjectModal"
+  v-model:modelSubjects="selectedSubjects"
+  :subjects="available"
+/>
 
-    <!-- TOPIC SELECTOR -->
-    <TopicSelector
-      v-if="activeSubject"
-      v-model="showTopicModal"
-      v-model:modelTopics="activeSubject.topics"
-      :topics="getSubjectDetails(activeSubject)?.topics || []"
-    />
+
+<!-- TOPIC SELECTOR -->
+<TopicSelector
+  v-if="activeSubject"
+  v-model="showTopicModal"
+  v-model:modelTopics="activeSubject.topics"
+  :topics="getSubjectDetails(activeSubject)?.topics || []"
+/>
   </div>
 </template>
+
+
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import subjectsdetails from "~/data/subjectdetail.js";
+import {
+  durationToSeconds,
+  formatDurationLabel,
+  secondsToDuration,
+} from "~/utils/examTime";
 
-const { getQuestions } = useQuestionSearch();
-
+const { getQuestions,  loadSubjects} = useQuestionSearch();
+import {
+  getSubjectMeta,
+  getSubjectIcon,
+  getSubjectColor,
+  normalizeSubjectId,
+} from "~/utils/subjectMeta";
 /*
 |--------------------------------------------------------------------------
-| Emits & App State
+| Emits & App   State
 |--------------------------------------------------------------------------
 */
 
 const emit = defineEmits(["gohome"]);
 const appState = useAppState();
-
+const available = ref([]);
 /*
 |--------------------------------------------------------------------------
 | UI State
@@ -717,14 +725,19 @@ const isStarting = ref(false);
 |--------------------------------------------------------------------------
 */
 
-const examCategories = [
-  "All",
-  "Languages",
-  "Science",
-  "Commercial",
-  "Arts",
-  "Social Science",
-];
+const fetchSubjects = async () => {
+
+  try {
+    const result = await loadSubjects();
+     available.value = result 
+   
+  } catch (error) {
+   
+  } finally {
+  
+  }
+};
+
 
 /*
 |--------------------------------------------------------------------------
@@ -747,33 +760,7 @@ const examModes = [
   },
 ];
 
-/*
-|--------------------------------------------------------------------------
-| User
-|--------------------------------------------------------------------------
-*/
 
-const saveUser = () => {
-  const name = (appState.value.currentsuser || "").trim();
-
-  if (!name || name.toLowerCase() === "unknown") {
-    return;
-  }
-
-  if (!appState.value.users) {
-    appState.value.users = [];
-  }
-
-  const exists = appState.value.users.some(
-    (user) => user.toLowerCase() === name.toLowerCase()
-  );
-
-  if (!exists) {
-    appState.value.users.push(name);
-  }
-
-  appState.value.currentsuser = name;
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -797,7 +784,16 @@ const selectedSubjects = ref([
 */
 
 const examMode = ref("practice");
-const examDuration = ref("02:00");
+const examDurationHours = ref(2);
+const examDurationMinutes = ref(0);
+const durationHours = Array.from({ length: 100 }, (_, hour) => hour);
+const durationMinutes = Array.from({ length: 60 }, (_, minute) => minute);
+const examDuration = computed(() =>
+  secondsToDuration(
+    examDurationHours.value * 3600 +
+      examDurationMinutes.value * 60
+  )
+);
 const shuffleQuestions = ref(true);
 const shuffleOptions = ref(true);
 
@@ -807,170 +803,8 @@ const shuffleOptions = ref(true);
 |--------------------------------------------------------------------------
 */
 
-const SUBJECTS = [
-  "accounting",
-  "agriculture",
-  "arabic",
-  "biology",
-  "chemistry",
-  "christian-religious-studies",
-  "civic-education",
-  "commerce",
-  "computer-studies",
-  "economics",
-  "english",
-  "fine-art",
-  "french",
-  "geography",
-  "government",
-  "hausa",
-  "history",
-  "home-economics",
-  "igbo",
-  "insurance",
-  "literature-in-english",
-  "mathematics",
-  "marketing",
-  "physics",
-];
 
-/*
-|--------------------------------------------------------------------------
-| Subject Icons
-|--------------------------------------------------------------------------
-*/
 
-const subjectIcons = {
-  accounting: "lucide:calculator",
-  agriculture: "lucide:wheat",
-  arabic: "lucide:languages",
-  biology: "lucide:dna",
-  chemistry: "lucide:flask-conical",
-  "christian-religious-studies": "lucide:church",
-  "civic-education": "lucide:landmark",
-  commerce: "lucide:shopping-cart",
-  "computer-studies": "lucide:monitor",
-  economics: "lucide:chart-no-axes-combined",
-  english: "lucide:book-open",
-  "fine-art": "lucide:palette",
-  french: "lucide:languages",
-  geography: "lucide:globe-2",
-  government: "lucide:building-2",
-  hausa: "lucide:languages",
-  history: "lucide:scroll-text",
-  "home-economics": "lucide:house",
-  igbo: "lucide:languages",
-  insurance: "lucide:shield-check",
-  "literature-in-english": "lucide:book-text",
-  mathematics: "lucide:sigma",
-  marketing: "lucide:megaphone",
-  physics: "lucide:atom",
-};
-
-/*
-|--------------------------------------------------------------------------
-| Subject Colors
-|--------------------------------------------------------------------------
-*/
-
-const subjectColors = {
-  accounting: {
-    bg: "bg-blue-100",
-    text: "text-blue-600",
-  },
-  agriculture: {
-    bg: "bg-green-100",
-    text: "text-green-600",
-  },
-  arabic: {
-    bg: "bg-orange-100",
-    text: "text-orange-600",
-  },
-  biology: {
-    bg: "bg-emerald-100",
-    text: "text-emerald-600",
-  },
-  chemistry: {
-    bg: "bg-purple-100",
-    text: "text-purple-600",
-  },
-  "christian-religious-studies": {
-    bg: "bg-red-100",
-    text: "text-red-600",
-  },
-  "civic-education": {
-    bg: "bg-indigo-100",
-    text: "text-indigo-600",
-  },
-  commerce: {
-    bg: "bg-yellow-100",
-    text: "text-yellow-600",
-  },
-  "computer-studies": {
-    bg: "bg-cyan-100",
-    text: "text-cyan-600",
-  },
-  economics: {
-    bg: "bg-teal-100",
-    text: "text-teal-600",
-  },
-  english: {
-    bg: "bg-blue-100",
-    text: "text-blue-600",
-  },
-  "fine-art": {
-    bg: "bg-pink-100",
-    text: "text-pink-600",
-  },
-  french: {
-    bg: "bg-violet-100",
-    text: "text-violet-600",
-  },
-  geography: {
-    bg: "bg-lime-100",
-    text: "text-lime-600",
-  },
-  government: {
-    bg: "bg-slate-100",
-    text: "text-slate-600",
-  },
-  hausa: {
-    bg: "bg-amber-100",
-    text: "text-amber-600",
-  },
-  history: {
-    bg: "bg-stone-100",
-    text: "text-stone-600",
-  },
-  "home-economics": {
-    bg: "bg-rose-100",
-    text: "text-rose-600",
-  },
-  igbo: {
-    bg: "bg-green-100",
-    text: "text-green-600",
-  },
-  insurance: {
-    bg: "bg-sky-100",
-    text: "text-sky-600",
-  },
-  "literature-in-english": {
-    bg: "bg-fuchsia-100",
-    text: "text-fuchsia-600",
-  },
-  mathematics: {
-    bg: "bg-indigo-100",
-    text: "text-indigo-600",
-  },
-  marketing: {
-    bg: "bg-pink-100",
-    text: "text-pink-600",
-  },
-  physics: {
-    bg: "bg-cyan-100",
-    text: "text-cyan-600",
-  },
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -982,18 +816,9 @@ const getSubjectDetails = (subject) => {
   return subjectsdetails.find((item) => item.id === subject.id);
 };
 
-const getSubjectIcon = (subject) => {
-  return subjectIcons[subject] || "lucide:book-open";
-};
 
-const getSubjectColor = (subject) => {
-  return (
-    subjectColors[subject] || {
-      bg: "bg-slate-100",
-      text: "text-slate-600",
-    }
-  );
-};
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -1001,44 +826,7 @@ const getSubjectColor = (subject) => {
 |--------------------------------------------------------------------------
 */
 
-const categoryMap = {
-  Languages: ["english", "arabic", "french", "hausa", "igbo"],
 
-  Science: [
-    "biology",
-    "chemistry",
-    "physics",
-    "mathematics",
-    "agriculture",
-    "computer-studies",
-  ],
-
-  Commercial: ["accounting", "commerce", "economics", "insurance", "marketing"],
-
-  Arts: [
-    "fine-art",
-    "literature-in-english",
-    "history",
-    "christian-religious-studies",
-  ],
-
-  "Social Science": [
-    "government",
-    "civic-education",
-    "geography",
-    "home-economics",
-  ],
-};
-
-const getSubjectCategory = (subjectId) => {
-  for (const [category, subjects] of Object.entries(categoryMap)) {
-    if (subjects.includes(subjectId)) {
-      return category;
-    }
-  }
-
-  return "All";
-};
 
 /*
 |--------------------------------------------------------------------------
@@ -1235,11 +1023,17 @@ function shuffleQuestionOptions(question) {
 
 const startExam = async () => {
   if (isStarting.value) return;
-
+  console.log( selectedSubjects.value.length,'ffffffdddddaa');
+  
   appState.value.reviewQuestions = false;
 
   if (selectedSubjects.value.length === 0) {
     alert("Please select at least one subject.");
+    return;
+  }
+
+  if (durationToSeconds(examDuration.value, 0) <= 0) {
+    alert("Please choose an exam duration greater than zero.");
     return;
   }
 
@@ -1291,7 +1085,7 @@ const startExam = async () => {
 
     appState.value.examQuestions = examQuestions;
 
-    saveUser();
+  
 
     await navigateTo("/exam");
   } catch (error) {
@@ -1318,7 +1112,11 @@ onMounted(() => {
 
     if (settings) {
       examMode.value = settings.mode || "practice";
-      examDuration.value = settings.duration || "02:00";
+      const durationSeconds = durationToSeconds(settings.duration);
+      examDurationHours.value = Math.floor(durationSeconds / 3600);
+      examDurationMinutes.value = Math.floor(
+        (durationSeconds % 3600) / 60
+      );
       shuffleQuestions.value = settings.shuffleQuestions ?? true;
       shuffleOptions.value = settings.shuffleOptions ?? true;
     }
@@ -1369,6 +1167,10 @@ watch(
 const goHome = () => {
   emit("gohome");
 };
+
+onMounted(() => {
+  fetchSubjects();
+});
 </script>
 
 <style scoped>

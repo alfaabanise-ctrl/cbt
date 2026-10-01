@@ -8,7 +8,7 @@ import {
   watch,
 } from 'vue'
 import platform from '~/platforms'
-import Database from '@tauri-apps/plugin-sql'
+import { getDatabase } from '~/utils/databases'
 const isTauri = computed(() => {
   return import.meta.client && !!window.__TAURI_INTERNALS__
 })
@@ -74,9 +74,7 @@ async function getDB() {
     return db.value
   }
 
-  db.value = await Database.load(
-    props.database,
-  )
+  db.value = await getDatabase(props.database)
 
   return db.value
 }

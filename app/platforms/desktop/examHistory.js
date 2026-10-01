@@ -68,11 +68,11 @@ export async function saveExamHistory(history) {
                 result.aggregate,
                 result.maxAggregate,
 
-                result.duration,
-                result.durationUsed,
+                result.duration ?? result.totalDuration ?? 0,
+                result.durationUsed ?? 0,
 
-                result.timeSpent,
-                result.speed
+                result.timeSpent ?? "00:00:00",
+                result.speed ?? 0
 
             ]
 
@@ -94,9 +94,11 @@ export async function saveExamHistory(history) {
         // Save subject summaries
         //--------------------------------------------------
 
-        if (Array.isArray(history.subjects)) {
+        const subjects = history.subjects ?? result.subjects
 
-            for (const subject of history.subjects) {
+        if (Array.isArray(subjects)) {
+
+            for (const subject of subjects) {
 
                 await db.execute(
 

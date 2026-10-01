@@ -18,7 +18,6 @@ export async function getDictDB() {
 
 export async function lookupWord(word) {
   const db = await getDictDB()
-
   const rows = await db.select(
     `SELECT word, meaning, part_of_speech, example, has_definition
      FROM dictionary
