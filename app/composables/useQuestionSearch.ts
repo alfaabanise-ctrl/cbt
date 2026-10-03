@@ -1,6 +1,7 @@
 import { ref } from "vue"
 import { toHtml, optionsToHtml } from "./formatHtml"
 import { getQuestionsDB } from "../utils/databases"
+import { isSoftwareActivated } from "./useSoftwareSecurity"
 
 
 // =====================================================================
@@ -303,6 +304,9 @@ export function useQuestionSearch() {
         .filter(Boolean)
       const conditions: string[] = []
       const params: (string | number)[] = []
+      const solutionSearchExpression = isSoftwareActivated()
+        ? "COALESCE(NULLIF(q.solution, ''), q.explanation, '')"
+        : "COALESCE(q.solution, '')"
 
       if (subject) {
         conditions.push("q.subject = ?")
@@ -320,7 +324,7 @@ export function useQuestionSearch() {
             instr(lower(COALESCE(NULLIF(q.question, ''), q.question_html, '')), ?) > 0 OR
             instr(lower(COALESCE(q.topic, '')), ?) > 0 OR
             instr(lower(COALESCE(q.subject, '')), ?) > 0 OR
-            instr(lower(COALESCE(NULLIF(q.solution, ''), q.explanation, '')), ?) > 0
+            instr(lower(${solutionSearchExpression}), ?) > 0
           )
         `)
         params.push(term, term, term, term)

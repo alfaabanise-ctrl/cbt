@@ -98,7 +98,10 @@
             </p>
           </div>
 
-          <form @submit.prevent="activateWithKey">
+          <form
+            v-if="!syncing"
+            @submit.prevent="activateWithKey"
+          >
             <!-- LICENSE KEY -->
             <div class="mb-5">
               <label
@@ -244,6 +247,46 @@
               {{ loading ? "Activating..." : "Activate Product" }}
             </button>
           </form>
+
+          <div
+            v-else
+            class="space-y-4"
+            role="status"
+            aria-live="polite"
+          >
+            <p class="text-center text-sm text-[#6b665c]">
+              {{ syncPhase }}
+            </p>
+
+            <div
+              class="h-3 overflow-hidden rounded-full bg-[#e6e0d2]"
+              aria-label="Content download progress"
+              role="progressbar"
+              :aria-valuenow="syncPercentage"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            >
+              <div
+                class="h-full rounded-full bg-[#b9873b] transition-all duration-300"
+                :style="{ width: `${syncPercentage}%` }"
+              />
+            </div>
+
+            <p class="text-center text-xs text-[#6b665c]">
+              {{ syncPercentage }}%
+              <span v-if="syncTotal">
+                · {{ syncDownloaded }} / {{ syncTotal }} items
+              </span>
+            </p>
+          </div>
+
+          <p
+            v-if="syncSuccess && !syncing"
+            class="mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700"
+            role="status"
+          >
+            {{ syncSuccess }}
+          </p>
         </div>
       </section>
 
@@ -426,9 +469,24 @@
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const emit = defineEmits(['gohome'])
+const software = useSoftwareSecurity()
+const {
+  phase: syncPhase,
+  percentage: contentSyncPercentage,
+  downloadedTotal: syncDownloaded,
+  total: syncTotal,
+  completed: contentSyncCompleted,
+  error: contentSyncError,
+  startDownload
+} = useContentSync()
+const syncPercentage = computed(() =>
+  syncPhase.value === 'Activating product...'
+    ? 0
+    : contentSyncPercentage.value
+)
 
 /* =========================================================
    STATE
@@ -446,6 +504,8 @@ const message = ref('')
 const messageType = ref('success')
 
 const isActivated = ref(false)
+const syncing = ref(false)
+const syncSuccess = ref('')
 
 /* =========================================================
    FORM
@@ -559,28 +619,9 @@ const validateKeyForm = () => {
 
   let valid = true
 
-  if (!form.name) {
-    errors.name =
-      'Please enter your full name.'
 
-    valid = false
-  }
 
-  if (!form.email) {
-    errors.email =
-      'Please enter your email address.'
 
-    valid = false
-  } else if (
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-      form.email
-    )
-  ) {
-    errors.email =
-      'Please enter a valid email address.'
-
-    valid = false
-  }
 
   if (!form.licenseKey) {
     errors.licenseKey =
@@ -634,36 +675,37 @@ const activateWithKey = async () => {
   }
 
   loading.value = true
+  syncing.value = true
+  syncPhase.value = 'Activating product...'
+  syncSuccess.value = ''
   message.value = ''
 
   try {
-    /*
-     * Replace this with your real activation API.
-     */
-
-    await new Promise(resolve =>
-      setTimeout(resolve, 1000)
-    )
-
+    const cleanToken = form.licenseKey.trim().toUpperCase()
+    await software.activate(cleanToken)
+    await startDownload(cleanToken)
+    if (!contentSyncCompleted.value) {
+      throw new Error(contentSyncError.value || 'Content download did not complete.')
+    }
     isActivated.value = true
 
-    showMessage(
-      'Product activated successfully.',
-      'success'
-    )
+    syncSuccess.value = 'Activation successful. Your lessons and questions have been updated.'
+    showMessage(syncSuccess.value, 'success')
   } catch (error) {
     console.error(
-      'Activation failed:',
+      'Activation or content download failed:',
       error
     )
 
     showMessage(
       error?.data?.message ||
-        'Activation failed. Please check your license key and try again.',
+        error?.message ||
+        'Activation or content download failed. Please check your license key and try again.',
       'error'
     )
   } finally {
     loading.value = false
+    syncing.value = false
   }
 }
 

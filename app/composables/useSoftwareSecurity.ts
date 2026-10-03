@@ -6,6 +6,13 @@ import {
   softwareFetch,
 } from "~/utils/softwareSecurity";
 
+let softwareActivated = false;
+let initializationPromise: Promise<void> | null = null;
+
+export function isSoftwareActivated(): boolean {
+  return softwareActivated;
+}
+
 export const useSoftwareSecurity =
   () => {
     const systemId =
@@ -35,24 +42,32 @@ export const useSoftwareSecurity =
       );
 
     async function initialize() {
-      systemId.value =
-        await getSystemId();
+      if (!initializationPromise) {
+        initializationPromise = (async () => {
+          installationId.value =
+            await getInstallationId();
 
-      installationId.value =
-        await getInstallationId();
+          license.value =
+            await getLicenseInfo();
 
-      license.value =
-        await getLicenseInfo();
+          softwareActivated = Boolean(installationId.value);
+
+          if (softwareActivated) {
+            systemId.value =
+              await getSystemId();
+          }
+        })().catch((error) => {
+          initializationPromise = null;
+          throw error;
+        });
+      }
+
+      await initializationPromise;
 
       return {
-        systemId:
-          systemId.value,
-
-        installationId:
-          installationId.value,
-
-        license:
-          license.value,
+        systemId: systemId.value,
+        installationId: installationId.value,
+        license: license.value,
       };
     }
 
@@ -70,6 +85,7 @@ export const useSoftwareSecurity =
       installationId.value =
         data?.installationId ||
         null;
+      softwareActivated = Boolean(installationId.value);
 
       license.value =
         data?.license ||

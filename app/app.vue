@@ -43,6 +43,7 @@ import { invoke } from "@tauri-apps/api/core"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 
 const auth = useExamTipsAuth()
+const software = useSoftwareSecurity()
 const startupReady = ref(false)
 const startupStep = ref("Preparing the application...")
 const startupError = ref("")
@@ -59,8 +60,13 @@ const initializeApp = async (): Promise<void> => {
       const appWindow = getCurrentWindow()
 
       if (appWindow.label === "main") {
-        startupStep.value = "Preparing local content databases..."
-        await initializeBundledDatabases()
+        startupStep.value = "Checking software activation..."
+        await software.initialize()
+
+        if (software.activated.value) {
+          startupStep.value = "Preparing your subscribed content databases..."
+          await initializeBundledDatabases()
+        }
 
         startupStep.value = "Initializing the application databases..."
         await initializeDatabases()

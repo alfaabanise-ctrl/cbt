@@ -1,12 +1,15 @@
 import Database from "@tauri-apps/plugin-sql"
 import { readTextFile } from "@tauri-apps/plugin-fs"
 import { resolveResource } from "@tauri-apps/api/path"
+import { isSoftwareActivated } from "~/composables/useSoftwareSecurity"
 
 type DatabaseName =
   | "cbt.db"
   | "questions.db"
   | "lessons.db"
   | "dictionary.db"
+
+type ContentDatabaseName = "questions.db" | "lessons.db"
 
 type SqlDatabase = Awaited<
   ReturnType<typeof Database.load>
@@ -18,6 +21,14 @@ const databaseConnections: Partial<
 
 const databasePromises: Partial<
   Record<DatabaseName, Promise<SqlDatabase>>
+> = {}
+
+const bundledContentConnections: Partial<
+  Record<ContentDatabaseName, SqlDatabase>
+> = {}
+
+const bundledContentPromises: Partial<
+  Record<ContentDatabaseName, Promise<SqlDatabase>>
 > = {}
 
 let applicationDatabasesPromise: Promise<void> | null = null
@@ -363,26 +374,45 @@ async function initializeQuestionsDatabase(db: any) {
 
   // ==========================================================
   // QUESTIONS MIGRATIONS
+  // Keep existing downloads while upgrading older DB schemas
+  // to include every column used by saveQuestions().
   // ==========================================================
 
-  // explanation column
-  if (
-    !(await columnExists(
-      db,
-      "questions",
-      "explanation"
-    ))
-  ) {
+  const questionColumns: Array<[string, string]> = [
+    ["examType", "TEXT"],
+    ["subject", "TEXT"],
+    ["year", "INTEGER"],
+    ["section", "TEXT"],
+    ["topic", "TEXT"],
+    ["category", "TEXT"],
+    ["difficulty", "TEXT"],
+    ["question", "TEXT"],
+    ["question_html", "TEXT"],
+    ["options", "TEXT"],
+    ["explanation", "TEXT"],
+    ["options_html", "TEXT"],
+    ["answer", "TEXT"],
+    ["solution", "TEXT"],
+    ["solution_html", "TEXT"],
+    ["imageUrl", "TEXT"],
+    ["hasPassage", "INTEGER DEFAULT 0"],
+    ["passage", "TEXT"],
+    ["passage_html", "TEXT"],
+    ["country", "TEXT"],
+    ["institution", "TEXT"],
+    ["state", "TEXT"],
+    ["source", "TEXT"],
+  ]
 
-    console.log(
-      "➕ Adding explanation column to questions..."
+  for (const [columnName, columnType] of questionColumns) {
+    if (await columnExists(db, "questions", columnName)) {
+      continue
+    }
+
+    console.info(`➕ Adding ${columnName} column to questions...`)
+    await db.execute(
+      `ALTER TABLE questions ADD COLUMN ${columnName} ${columnType}`
     )
-
-    await db.execute(`
-      ALTER TABLE questions
-      ADD COLUMN explanation TEXT
-    `)
-
   }
 
 
@@ -1013,6 +1043,82 @@ async function openAndInitializeDatabase(
   return databasePromises[name]!
 }
 
+async function openBundledContentDatabase(
+  name: ContentDatabaseName
+): Promise<SqlDatabase> {
+  if (bundledContentConnections[name]) {
+    return bundledContentConnections[name]!
+  }
+
+  if (!bundledContentPromises[name]) {
+    bundledContentPromises[name] = (async () => {
+      const resourcePath = await resolveResource(`resources/${name}`)
+      const db = await Database.load(`sqlite:${resourcePath}?mode=ro`)
+
+      if (name === "questions.db") {
+        await db.select(`
+          SELECT
+            id,
+            question,
+            question_html,
+            options,
+            options_html,
+            answer,
+            examType,
+            subject,
+            year,
+            section,
+            topic,
+            category,
+            difficulty,
+            source,
+            solution,
+            solution_html,
+            imageUrl,
+            hasPassage,
+            passage,
+            passage_html,
+            country,
+            institution,
+            state
+          FROM questions
+          LIMIT 0
+        `)
+      } else {
+        await db.select(`
+          SELECT
+            id,
+            topic_id,
+            subject_id,
+            topic_number,
+            slug,
+            title,
+            summary,
+            blocks,
+            search_text,
+            order_index,
+            teaching_score,
+            teaching_level,
+            teaching_feedback
+          FROM lessons
+          LIMIT 0
+        `)
+
+        await db.select("SELECT rowid FROM lessons_fts LIMIT 0")
+      }
+
+      bundledContentConnections[name] = db
+      console.info(`Using bundled read-only ${name} for an unsubscribed user`)
+      return db
+    })().catch((error) => {
+      delete bundledContentPromises[name]
+      throw error
+    })
+  }
+
+  return bundledContentPromises[name]!
+}
+
 function getInitializedDatabase(name: DatabaseName): Promise<SqlDatabase> {
   const db = databaseConnections[name]
   if (!db) {
@@ -1034,7 +1140,14 @@ export function getDB(): Promise<SqlDatabase> {
 // ============================================================
 
 export function getQuestionsDB(): Promise<SqlDatabase> {
-  return getInitializedDatabase("questions.db")
+  if (!isSoftwareActivated()) {
+    return openBundledContentDatabase("questions.db")
+  }
+
+  return openAndInitializeDatabase(
+    "questions.db",
+    initializeQuestionsDatabase
+  )
 }
 
 
@@ -1043,7 +1156,14 @@ export function getQuestionsDB(): Promise<SqlDatabase> {
 // ============================================================
 
 export function getLessonsDB(): Promise<SqlDatabase> {
-  return getInitializedDatabase("lessons.db")
+  if (!isSoftwareActivated()) {
+    return openBundledContentDatabase("lessons.db")
+  }
+
+  return openAndInitializeDatabase(
+    "lessons.db",
+    initializeLessonsSchema
+  )
 }
 
 
@@ -1094,26 +1214,23 @@ export async function initializeDatabase(): Promise<void> {
 }
 
 export async function initializeLessonsDatabase(): Promise<void> {
-  await openAndInitializeDatabase(
-    "lessons.db",
-    initializeLessonsSchema
-  )
+  await getLessonsDB()
 }
 
 export function initializeDatabases(): Promise<void> {
   if (!applicationDatabasesPromise) {
-    applicationDatabasesPromise = Promise.all([
-      openAndInitializeDatabase("cbt.db", initializeCbtDatabase),
-      openAndInitializeDatabase(
-        "questions.db",
-        initializeQuestionsDatabase
-      ),
-      openAndInitializeDatabase(
-        "lessons.db",
-        initializeLessonsSchema
-      ),
-      getDictDB(),
-    ]).then(() => undefined).catch((error) => {
+    applicationDatabasesPromise = (async () => {
+      await openAndInitializeDatabase("cbt.db", initializeCbtDatabase)
+      await getDictDB()
+
+      if (isSoftwareActivated()) {
+        await getQuestionsDB()
+        await getLessonsDB()
+      } else {
+        await openBundledContentDatabase("questions.db")
+        await openBundledContentDatabase("lessons.db")
+      }
+    })().catch((error) => {
       applicationDatabasesPromise = null
       throw error
     })

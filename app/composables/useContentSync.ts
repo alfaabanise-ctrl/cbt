@@ -422,6 +422,9 @@ export function useContentSync() {
     error.value =
       ""
 
+    manifest.value =
+      null
+
 
     subjectsDownloaded.value =
       0
@@ -453,8 +456,24 @@ export function useContentSync() {
         )
 
 
-      manifest.value =
+      const responseData: any =
         startResponse.data
+
+      manifest.value =
+        responseData?.content
+          ? {
+              ...responseData.content,
+              batchSize:
+                responseData.content.batchSize ||
+                responseData.batchSize,
+            }
+          : responseData || null
+
+      if (!manifest.value) {
+        throw new Error(
+          "The server did not return a content manifest",
+        )
+      }
 
 
       console.log(

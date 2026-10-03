@@ -54,7 +54,7 @@
             </div>
 
             <!-- Activation --> 
-            <div :class="auth.isLoggedIn.value ? 'hidden': 'false'" class="flex min-w-0 shrink-0 items-center gap-1">
+            <div class="flex min-w-0 shrink-0 items-center gap-1">
               <span
                 class="hidden rounded-lg bg-yellow-400 px-3 py-2 text-center text-[11px] font-bold text-gray-900 md:block"
               >
