@@ -2,6 +2,7 @@ import {
   getLessonsDB as getSharedLessonsDB,
   initializeLessonsDatabase as initializeSharedLessonsDatabase,
 } from "../../utils/databases"
+import { scoreLessonForSelfStudy } from "../../utils/lessonTeachingScore"
 
 /**
  * ============================================================
@@ -623,6 +624,8 @@ export async function getSidebar() {
       slug: string
       title: string
       summary: string | null
+      teaching_score: number | null
+      teaching_level: string | null
       order_index: number
     }[]>(`
       SELECT
@@ -633,6 +636,8 @@ export async function getSidebar() {
         slug,
         title,
         summary,
+        teaching_score,
+        teaching_level,
         order_index
       FROM lessons
       ORDER BY topic_id, order_index
@@ -716,6 +721,10 @@ export async function getSidebar() {
                 title: lesson.title,
 
                 summary: lesson.summary,
+
+                teaching_score: lesson.teaching_score,
+
+                teaching_level: lesson.teaching_level,
 
                 order_index: lesson.order_index
               }
@@ -903,10 +912,58 @@ export async function getLesson(
     }
   }
 
+  let teachingFeedback: string[] = []
+  if (lesson.teaching_feedback) {
+    try {
+      const parsedFeedback = JSON.parse(lesson.teaching_feedback)
+      if (Array.isArray(parsedFeedback)) {
+        teachingFeedback = parsedFeedback.map(String)
+      }
+    } catch {
+      teachingFeedback = []
+    }
+  }
+
+  const savedTeachingScore =
+    lesson.teaching_score === null ||
+    lesson.teaching_score === undefined
+      ? Number.NaN
+      : Number(lesson.teaching_score)
+  const teachingEvaluation = Number.isFinite(savedTeachingScore)
+    ? {
+        score: savedTeachingScore,
+        level: lesson.teaching_level || "Needs teacher support",
+        feedback: teachingFeedback,
+      }
+    : scoreLessonForSelfStudy(
+        lesson.title,
+        lesson.summary,
+        lesson.blocks
+      )
+
+  if (!Number.isFinite(savedTeachingScore)) {
+    await db.execute(
+      `
+      UPDATE lessons
+      SET teaching_score = ?, teaching_level = ?, teaching_feedback = ?
+      WHERE id = ?
+      `,
+      [
+        teachingEvaluation.score,
+        teachingEvaluation.level,
+        JSON.stringify(teachingEvaluation.feedback),
+        lesson.id,
+      ]
+    )
+  }
+
 
   return {
     ...lesson,
-    blocks
+    blocks,
+    teaching_score: teachingEvaluation.score,
+    teaching_level: teachingEvaluation.level,
+    teaching_feedback: teachingEvaluation.feedback,
   }
 }
 

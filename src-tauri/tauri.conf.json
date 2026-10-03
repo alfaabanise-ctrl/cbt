@@ -18,33 +18,29 @@
       {
         "label": "splashscreen",
         "title": "ExamTips",
-        "url": "http://localhost:3000/splash",
-
+        "url": "splashscreen.html",
         "width": 850,
         "height": 480,
-
         "resizable": false,
         "fullscreen": false,
         "decorations": false,
         "center": true,
-          "transparent": true,
+        "transparent": true,
         "visible": true,
         "alwaysOnTop": false,
-         "shadow": false,
+        "shadow": false,
         "skipTaskbar": true
       },
       {
         "label": "main",
         "title": "CBT - ExamTips",
-        "width": 200,
-        "height": 444,
+        "width": 1100,
+        "height": 760,
         "minWidth": 320,
         "minHeight": 568,
         "resizable": true,
         "fullscreen": false,
         "center": true,
-       
-
         "visible": false
       }
     ],

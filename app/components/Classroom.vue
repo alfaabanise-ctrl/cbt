@@ -302,6 +302,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
+import platform from "~/platforms";
 
 const emit = defineEmits(["gohome", "open-subject"]);
 
@@ -326,7 +327,8 @@ const {
 } = useClassroom();
 const {
   loadLessonProgress,
-  getSubjectProgress
+  getSubjectProgress,
+  getLastReadLessonSlug,
 } = useLessonProgress()
 
 const showAddUser = ref(false);
@@ -402,9 +404,29 @@ const openSubjectPicker = async () => {
 const openSubject = async (subject: any) => {
   if (!subject?.slug && !subject?.id) return;
 
-  const subjectSlug = subject.slug || subject.id;
+  const subjectSlug = String(subject.slug || subject.id);
+  let lastReadLessonSlug: string | null = null;
 
-  await navigateTo(`/learning/${subjectSlug}`);
+  try {
+    loadLessonProgress();
+    const lessonSubject = await platform.lesson.getSubject(subjectSlug);
+    const availableLessons = (lessonSubject?.topics || []).flatMap(
+      (topic: any) => topic.lessons || [],
+    );
+
+    lastReadLessonSlug = getLastReadLessonSlug(
+      subjectSlug,
+      availableLessons,
+    );
+  } catch (error) {
+    console.error("Failed to resolve the last-read lesson:", error);
+  }
+
+  const destination = lastReadLessonSlug
+    ? `/learning/${encodeURIComponent(subjectSlug)}/${encodeURIComponent(lastReadLessonSlug)}`
+    : `/learning/${encodeURIComponent(subjectSlug)}`;
+
+  await navigateTo(destination);
 };
 
 /* =========================================================

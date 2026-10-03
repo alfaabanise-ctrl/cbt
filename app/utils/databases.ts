@@ -1,4 +1,5 @@
 import Database from "@tauri-apps/plugin-sql"
+import { resolveResource } from "@tauri-apps/api/path"
 
 type DatabaseName =
   | "cbt.db"
@@ -18,7 +19,6 @@ const databasePromises: Partial<
   Record<DatabaseName, Promise<SqlDatabase>>
 > = {}
 
-let dictionaryDb: SqlDatabase | null = null
 let applicationDatabasesPromise: Promise<void> | null = null
 
 
@@ -577,6 +577,12 @@ async function initializeLessonsSchema(db: any) {
 
       order_index INTEGER DEFAULT 0,
 
+      teaching_score INTEGER,
+
+      teaching_level TEXT,
+
+      teaching_feedback TEXT,
+
       created_at TEXT DEFAULT CURRENT_TIMESTAMP,
 
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
@@ -616,6 +622,21 @@ async function initializeLessonsSchema(db: any) {
     )
   }
 
+  const lessonScoreColumns = [
+    ["teaching_score", "INTEGER"],
+    ["teaching_level", "TEXT"],
+    ["teaching_feedback", "TEXT"],
+  ] as const
+
+  for (const [columnName, columnType] of lessonScoreColumns) {
+    if (await columnExists(db, "lessons", columnName)) {
+      continue
+    }
+
+    await db.execute(
+      `ALTER TABLE lessons ADD COLUMN ${columnName} ${columnType}`
+    )
+  }
 
   // ==========================================================
   // LESSON INDEXES
@@ -719,44 +740,13 @@ async function initializeLessonsSchema(db: any) {
 async function initializeDictionaryDatabase(
   db: any
 ) {
-
-  console.log(
-    "🔧 Checking dictionary.db tables..."
-  )
-
-
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS dictionary (
-
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-
-      word TEXT NOT NULL,
-
-      meaning TEXT,
-
-      part_of_speech TEXT,
-
-      example TEXT,
-
-      has_definition INTEGER DEFAULT 1
-    )
+  await db.select(`
+    SELECT word, meaning, part_of_speech, example, has_definition
+    FROM dictionary
+    LIMIT 0
   `)
 
-
-  // ==========================================================
-  // DICTIONARY INDEX
-  // ==========================================================
-
-  await db.execute(`
-    CREATE INDEX IF NOT EXISTS
-    idx_dictionary_word
-    ON dictionary(word)
-  `)
-
-
-  console.log(
-    "✅ dictionary.db ready"
-  )
+  console.info("Bundled dictionary resource is ready")
 }
 
 
@@ -766,7 +756,8 @@ async function initializeDictionaryDatabase(
 
 async function openAndInitializeDatabase(
   name: DatabaseName,
-  initialize: (db: SqlDatabase) => Promise<void>
+  initialize: (db: SqlDatabase) => Promise<void>,
+  connectionString = `sqlite:${name}`
 ): Promise<SqlDatabase> {
   if (databaseConnections[name]) {
     return databaseConnections[name]!
@@ -774,7 +765,7 @@ async function openAndInitializeDatabase(
 
   if (!databasePromises[name]) {
     databasePromises[name] = (async () => {
-      const db = await Database.load(`sqlite:${name}`)
+      const db = await Database.load(connectionString)
 
       if (name !== "dictionary.db") {
         await db.execute("PRAGMA busy_timeout = 10000")
@@ -833,12 +824,15 @@ export function getLessonsDB(): Promise<SqlDatabase> {
 // ============================================================
 
 export async function getDictDB(): Promise<SqlDatabase> {
-  if (!dictionaryDb) {
-    dictionaryDb = await Database.load("sqlite:dictionary.db")
-    await initializeDictionaryDatabase(dictionaryDb)
-  }
+  const dictionaryResource = await resolveResource(
+    "resources/dictionary.db"
+  )
 
-  return dictionaryDb
+  return openAndInitializeDatabase(
+    "dictionary.db",
+    initializeDictionaryDatabase,
+    `sqlite:${dictionaryResource}`
+  )
 }
 
 export function getDatabase(
@@ -889,7 +883,8 @@ export function initializeDatabases(): Promise<void> {
       openAndInitializeDatabase(
         "lessons.db",
         initializeLessonsSchema
-      )
+      ),
+      getDictDB(),
     ]).then(() => undefined).catch((error) => {
       applicationDatabasesPromise = null
       throw error

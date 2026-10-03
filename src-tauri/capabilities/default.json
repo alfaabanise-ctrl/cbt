@@ -18,10 +18,15 @@
     "sql:default",
     "fs:allow-read-file",
     "fs:allow-write-file",
+    "fs:allow-exists",
+    "fs:allow-mkdir",
     {
       "identifier": "fs:scope",
       "allow": [
         "$RESOURCE/**/*",
+        "$APPCONFIG",
+        "$APPCONFIG/**/*",
+        "$APPLOCALDATA",
         "$APPLOCALDATA/**/*"
       ]
     },

@@ -59,14 +59,19 @@ export const useLessonProgress = () => {
   |--------------------------------------------------------------------------
   */
 
+  const lessonKeys = (lesson: any): string[] => {
+    return [
+      lesson?.slug,
+      lesson?.id,
+      lesson?._id,
+      lesson?.lessonId,
+    ]
+      .map((value) => String(value ?? '').trim())
+      .filter((value, index, keys) => value && keys.indexOf(value) === index)
+  }
+
   const lessonKey = (lesson: any) => {
-    return String(
-      lesson?.id ||
-        lesson?._id ||
-        lesson?.lessonId ||
-        lesson?.slug ||
-        ''
-    )
+    return lessonKeys(lesson)[0] || ''
   }
 
   /*
@@ -150,8 +155,12 @@ export const useLessonProgress = () => {
 
     const subject = getSubjectRecord(subjectSlug)
 
+    const savedRecord = lessonKeys(lesson)
+      .map((lessonId) => subject?.lessons?.[lessonId])
+      .find(Boolean)
+
     return (
-      subject?.lessons?.[key] || {
+      savedRecord || {
         read: false,
         timeSpent: 0,
         lastRead: null,
@@ -172,10 +181,19 @@ export const useLessonProgress = () => {
     if (!subject) return null
 
     if (!subject.lessons[key]) {
-      subject.lessons[key] = {
+      const previousRecord = lessonKeys(lesson)
+        .slice(1)
+        .map((lessonId) => subject.lessons[lessonId])
+        .find(Boolean)
+
+      subject.lessons[key] = previousRecord || {
         read: false,
         timeSpent: 0,
         lastRead: null,
+      }
+
+      for (const lessonId of lessonKeys(lesson).slice(1)) {
+        delete subject.lessons[lessonId]
       }
     }
 
@@ -221,6 +239,75 @@ export const useLessonProgress = () => {
         lessonProgress.value[subjectSlug]?.totalSubjectProgress || 0
       )
     )
+  }
+
+  const getLastReadLessonSlug = (
+    subjectSlug: string,
+    availableLessons: any[] = [],
+  ): string | null => {
+    const subjectProgress = lessonProgress.value[subjectSlug]
+    const progressLessons = subjectProgress?.lessons
+
+    const lessonsByIdentifier = new Map<string, any>()
+    for (const lesson of availableLessons) {
+      for (const identifier of lessonKeys(lesson)) {
+        lessonsByIdentifier.set(identifier, lesson)
+      }
+    }
+
+    const savedLastLessonSlug = String(
+      subjectProgress?.lastOpenedLessonSlug || '',
+    ).trim()
+    const savedLastLesson = lessonsByIdentifier.get(savedLastLessonSlug)
+    if (savedLastLesson?.slug) {
+      return String(savedLastLesson.slug)
+    }
+    if (savedLastLessonSlug) {
+      return savedLastLessonSlug
+    }
+
+    if (!progressLessons || typeof progressLessons !== 'object') {
+      return null
+    }
+
+    const lastReadLesson = Object.entries(progressLessons)
+      .filter(([, record]: [string, any]) => record?.read === true)
+      .map(([key, record]: [string, any]) => {
+        const identifiers = [
+          record?.slug,
+          record?.lessonSlug,
+          key,
+        ]
+          .map((value) => String(value ?? '').trim())
+          .filter(Boolean)
+        const matchingLesson = identifiers
+          .map((identifier) => lessonsByIdentifier.get(identifier))
+          .find(Boolean)
+
+        return {
+          slug: String(matchingLesson?.slug || record?.slug || record?.lessonSlug || '').trim(),
+          lastRead: Date.parse(String(record?.lastRead || '')) || 0,
+        }
+      })
+      .filter((record) => record.slug)
+      .sort((a, b) => b.lastRead - a.lastRead)[0]
+
+    return lastReadLesson?.slug || null
+  }
+
+  const recordLastOpenedLesson = (
+    subjectSlug: string,
+    lesson: any,
+  ) => {
+    const slug = String(lesson?.slug || '').trim()
+    if (!subjectSlug || !slug) return
+
+    const subject = getSubjectRecord(subjectSlug)
+    if (!subject) return
+
+    subject.lastOpenedLessonSlug = slug
+    subject.lastOpenedAt = new Date().toISOString()
+    saveLessonProgress()
   }
 
   /*
@@ -342,6 +429,7 @@ export const useLessonProgress = () => {
     const wasAlreadyRead = record.read === true
 
     record.read = true
+    record.slug = String(lesson?.slug || lessonKey(lesson))
     record.lastRead = new Date().toISOString()
 
     /*
@@ -454,8 +542,7 @@ export const useLessonProgress = () => {
 
   const startReadingTimer = (
     subjectSlug: string,
-    lesson: any,
-    totalLessons: number
+    lesson: any
   ) => {
     if (
       !import.meta.client ||
@@ -499,23 +586,12 @@ export const useLessonProgress = () => {
         elapsedSeconds
       )
 
-      if (
-        readingSeconds.value >=
-        requiredReadingSeconds.value
-      ) {
-        markLessonAsRead(
-          subjectSlug,
-          lesson,
-          totalLessons
-        )
-      }
     }, 1000)
   }
 
   const resetReadingTracker = (
     subjectSlug: string,
-    lesson: any,
-    totalLessons: number
+    lesson: any
   ) => {
     stopReadingTimer()
 
@@ -542,8 +618,7 @@ export const useLessonProgress = () => {
 
     startReadingTimer(
       subjectSlug,
-      lesson,
-      totalLessons
+      lesson
     )
   }
 
@@ -614,6 +689,8 @@ export const useLessonProgress = () => {
     getLessonTime,
     isLessonRead,
     getSubjectProgress,
+    getLastReadLessonSlug,
+    recordLastOpenedLesson,
 
     saveLessonProgressRecord,
 

@@ -6,31 +6,28 @@ import {
 } from "@tauri-apps/plugin-fs"
 
 import {
-  appDataDir,
-  resourceDir
+  appConfigDir,
+  join,
+  resolveResource
 } from "@tauri-apps/api/path"
 
 
 const databases = [
-  "cbt.db",
   "lessons.db",
-  "questions.db",
-  "dictionary.db"
+  "questions.db"
 ]
 
 
 export async function initializeBundledDatabases() {
 
-  const appData = await appDataDir()
-  const resources = await resourceDir()
+  const appConfig = await appConfigDir()
 
-  console.log("📁 AppData:", appData)
-  console.log("📦 Resources:", resources)
+  console.log("📁 AppConfig:", appConfig)
 
 
-  // Make sure AppData directory exists
-  if (!(await exists(appData))) {
-    await mkdir(appData, {
+  // Ensure the SQLite plugin's AppConfig directory exists.
+  if (!(await exists(appConfig))) {
+    await mkdir(appConfig, {
       recursive: true
     })
   }
@@ -38,11 +35,14 @@ export async function initializeBundledDatabases() {
 
   for (const database of databases) {
 
-    const destination =
-      `${appData}${database}`
+    const destination = await join(
+      appConfig,
+      database
+    )
 
-    const source =
-      `${resources}${database}`
+    const source = await resolveResource(
+      `resources/${database}`
+    )
 
 
     const alreadyExists =

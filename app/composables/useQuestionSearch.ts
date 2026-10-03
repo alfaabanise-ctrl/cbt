@@ -73,12 +73,7 @@ const parseExplanation = (value: any) => {
 
   } catch {
 
-    console.warn(
-      "⚠️ Invalid explanation JSON:",
-      value
-    )
-
-    return null
+    return value
   }
 
 
@@ -164,20 +159,30 @@ const normalizeQuestion = (
     return null
   }
 
+  const explanation = parseExplanation(
+    row.explanation || row.explaination
+  )
 
   return {
 
     ...row,
+
+    question:
+      row.question ||
+      row.question_html ||
+      "",
+
+    solution:
+      row.solution ||
+      row.solution_html ||
+      null,
 
 
     // ---------------------------------------------------------------
     // EXPLANATION
     // ---------------------------------------------------------------
 
-    explanation:
-      parseExplanation(
-        row.explanation
-      ),
+    explanation,
 
 
     // ---------------------------------------------------------------
@@ -231,6 +236,9 @@ export function useQuestionSearch() {
   const loading =
     ref(false)
 
+  const subjectsLoading =
+    ref(false)
+
 
   const error =
     ref<any>(null)
@@ -244,29 +252,6 @@ export function useQuestionSearch() {
   // Topics for currently selected subject
   const topics =
     ref<TopicItem[]>([])
-
-
-  // ===================================================================
-  // FTS QUERY
-  // ===================================================================
-
-  const toFtsQuery = (
-    term: string
-  ) => {
-
-    return term
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(
-        (word) =>
-          `${word.replace(
-            /["*]/g,
-            ""
-          )}*`
-      )
-      .join(" ")
-  }
 
 
   // ===================================================================
@@ -312,104 +297,73 @@ export function useQuestionSearch() {
         await getQuestionsDB()
 
 
-      const ftsQuery =
-        toFtsQuery(
-          query
-        )
-
-
-      const conditions:
-        string[] = []
-
-
-      const params:
-        any[] = [
-          ftsQuery
-        ]
-
-
-      // ---------------------------------------------------------------
-      // SUBJECT
-      // ---------------------------------------------------------------
+      const searchTerms = query
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean)
+      const conditions: string[] = []
+      const params: (string | number)[] = []
 
       if (subject) {
-
-        conditions.push(
-          "q.subject = ?"
-        )
-
-        params.push(
-          subject
-        )
+        conditions.push("q.subject = ?")
+        params.push(subject)
       }
 
-
-      // ---------------------------------------------------------------
-      // YEAR
-      // ---------------------------------------------------------------
-
-      if (year) {
-
-        conditions.push(
-          "q.year = ?"
-        )
-
-        params.push(
-          year
-        )
+      if (year !== null && year !== undefined) {
+        conditions.push("q.year = ?")
+        params.push(year)
       }
 
+      for (const term of searchTerms) {
+        conditions.push(`
+          (
+            instr(lower(COALESCE(NULLIF(q.question, ''), q.question_html, '')), ?) > 0 OR
+            instr(lower(COALESCE(q.topic, '')), ?) > 0 OR
+            instr(lower(COALESCE(q.subject, '')), ?) > 0 OR
+            instr(lower(COALESCE(NULLIF(q.solution, ''), q.explanation, '')), ?) > 0
+          )
+        `)
+        params.push(term, term, term, term)
+      }
 
-      const extraWhere =
-        conditions.length
-          ? `AND ${conditions.join(
-              " AND "
-            )}`
-          : ""
-
-
-      params.push(
-        limit
+      const safeLimit = Math.min(
+        100,
+        Math.max(1, Math.floor(Number(limit) || 30))
       )
+      params.push(safeLimit)
 
-
-      const rows =
-        await db.select<any[]>(
-          `
-          SELECT
-
-            q.id,
-            q.question,
-            q.subject,
-            q.year,
-            q.topic,
-            q.category,
-
-            snippet(
-              questions_fts,
-              0,
-              '⟦',
-              '⟧',
-              '…',
-              12
-            ) AS snippet
-
-          FROM questions_fts
-
-          JOIN questions q
-            ON q.rowid =
-              questions_fts.rowid
-
-          WHERE questions_fts MATCH ?
-
-          ${extraWhere}
-
-          ORDER BY rank
-
-          LIMIT ?
-          `,
-          params
-        )
+      const rows = await db.select<any[]>(
+        `
+        SELECT
+          q.id,
+          q.question,
+          q.subject,
+          q.year,
+          q.topic,
+          q.category,
+          q.examType,
+          substr(
+            COALESCE(NULLIF(q.question, ''), q.question_html, ''),
+            1,
+            260
+          ) AS snippet
+        FROM questions q
+        WHERE ${conditions.join(" AND ")}
+        ORDER BY
+          CASE
+            WHEN instr(lower(COALESCE(NULLIF(q.question, ''), q.question_html, '')), ?) > 0 THEN 0
+            ELSE 1
+          END,
+          q.year DESC,
+          q.id
+        LIMIT ?
+        `,
+        [
+          ...params.slice(0, -1),
+          searchTerms[0],
+          safeLimit
+        ]
+      )
 
 
       results.value =
@@ -1066,6 +1020,8 @@ export function useQuestionSearch() {
   // ===================================================================
 
   const getAllSubjects = async () => {
+    subjectsLoading.value = true
+    error.value = null
 
     try {
 
@@ -1114,8 +1070,6 @@ export function useQuestionSearch() {
 
 
       return list
-
-
     } catch (err) {
 
       console.error(
@@ -1131,8 +1085,9 @@ export function useQuestionSearch() {
       subjects.value =
         []
 
-
       return []
+    } finally {
+      subjectsLoading.value = false
     }
   }
 
@@ -1467,6 +1422,7 @@ export function useQuestionSearch() {
     currentQuestion,
     subjects,
     topics,
+    subjectsLoading,
     loading,
     error,
 

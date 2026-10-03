@@ -72,17 +72,36 @@
 
           <button
             v-for="subject in subjects"
-            :key="subject"
+            :key="subject.subject"
             type="button"
             class="filter-chip"
             :class="{
-              'filter-chip--active': activeSubject === subject,
+              'filter-chip--active': activeSubject === subject.subject,
             }"
-            @click="setSubject(subject)"
+            @click="setSubject(subject.subject)"
           >
-            {{ formatLabel(subject) }}
+            {{ formatLabel(subject.subject) }}
+            <span class="filter-chip__count">{{ subject.questionCount }}</span>
           </button>
         </div>
+      </div>
+
+      <div
+        v-else-if="subjectsLoading"
+        class="qs-status qs-status--subjects"
+        role="status"
+      >
+        <Icon name="lucide:loader-2" class="qs-status__spin" />
+        <span>Loading subjects...</span>
+      </div>
+
+      <div
+        v-if="error"
+        class="qs-error"
+        role="alert"
+      >
+        Unable to load questions from the local database.
+        {{ error.message || String(error) }}
       </div>
 
       <!-- LOADING -->
@@ -119,6 +138,7 @@
         v-else-if="
           query &&
           !loading &&
+          !error &&
           !results.length &&
           !currentQuestion
         "
@@ -245,18 +265,16 @@
           </li>
         </ul>
 
-        <div
-          v-if="currentQuestion.solution"
-          class="explanation"
-        >
+        <div v-if="explanationHtml" class="explanation">
           <span class="explanation__label">
             <Icon name="lucide:lightbulb" />
             Explanation
           </span>
 
-          <p class="explanation__text">
-            {{ currentQuestion.solution }}
-          </p>
+          <div
+            class="explanation__text"
+            v-html="explanationHtml"
+          />
         </div>
       </article>
     </main>
@@ -264,7 +282,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
+import DOMPurify from 'dompurify'
+import { toHtml } from '../composables/formatHtml'
 
 const emit = defineEmits(['gohome'])
 
@@ -272,7 +292,9 @@ const {
   results,
   currentQuestion,
   subjects,
+  subjectsLoading,
   loading,
+  error,
   search,
   loadQuestion,
   loadSubjects,
@@ -284,8 +306,34 @@ const activeSubject = ref(null)
 
 let debounceTimer = null
 
-onMounted(() => {
-  loadSubjects()
+const explanationHtml = computed(() => {
+  const question = currentQuestion.value
+  if (!question) return ''
+
+  const explanation = question.explanation
+  const simpleExplanation =
+    typeof explanation === 'string'
+      ? explanation
+      : explanation?.simplifiedExplanation
+  const detailedExplanation =
+    explanation?.explanation ||
+    question.solution_html ||
+    question.solution ||
+    question.explanation_html ||
+    question.explaination
+  const content = [simpleExplanation, detailedExplanation]
+    .find((value) => typeof value === 'string' && value.trim())
+
+  if (!content) return ''
+
+  const hasHtml = /<\/?[a-z][^>]*>/i.test(content)
+  const html = hasHtml ? content : toHtml(content)
+
+  return DOMPurify.sanitize(html)
+})
+
+onMounted(async () => {
+  await loadSubjects()
 })
 
 onBeforeUnmount(() => {
@@ -370,12 +418,20 @@ const formatLabel = (value) => {
 const renderSnippet = (snippet) => {
   if (!snippet) return ''
 
-  return String(snippet)
+  const escapedSnippet = String(snippet)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/\s+/g, ' ')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-    .replace(/⟦/g, '<mark>')
-    .replace(/⟧/g, '</mark>')
+  const firstTerm = query.value.trim().split(/\s+/)[0]
+  if (!firstTerm) return escapedSnippet
+
+  const escapedTerm = firstTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return escapedSnippet.replace(
+    new RegExp(`(${escapedTerm})`, 'ig'),
+    '<mark>$1</mark>'
+  )
 }
 
 // =========================================
@@ -633,6 +689,12 @@ const goHome = () => {
   color: #f4efe2;
 }
 
+.filter-chip__count {
+  margin-left: 0.35rem;
+  opacity: 0.7;
+  font-variant-numeric: tabular-nums;
+}
+
 /* =========================================
    STATUS / EMPTY STATE
 ========================================= */
@@ -645,6 +707,23 @@ const goHome = () => {
   margin-top: 1.5rem;
   color: var(--ink-soft);
   font-size: 0.85rem;
+}
+
+.qs-status--subjects {
+  margin: 0.8rem auto;
+}
+
+.qs-error {
+  width: 100%;
+  max-width: 720px;
+  margin: 0.75rem auto;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--bad-bg);
+  border-radius: 0.65rem;
+  background: var(--bad-bg);
+  color: var(--bad);
+  font-size: 0.85rem;
+  overflow-wrap: anywhere;
 }
 
 .qs-status__spin {

@@ -1,20 +1,5 @@
-import Database from "@tauri-apps/plugin-sql"
-import { resolveResource } from "@tauri-apps/api/path"
 import { ref } from 'vue'
-
-// ---------------------------------------------------------------------
-// singleton connection — same pattern as getDB() for cbt.db
-// ---------------------------------------------------------------------
-
-let dictDb = null
-
-async function getDictDB() {
-  if (!dictDb) {
-    const dbPath = await resolveResource("resources/dictionary.db")
-    dictDb = await Database.load(`sqlite:${dbPath}`)
-  }
-  return dictDb
-}
+import { getDictDB } from '~/utils/databases'
 
 // ---------------------------------------------------------------------
 // composable

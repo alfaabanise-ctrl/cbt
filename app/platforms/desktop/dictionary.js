@@ -1,19 +1,9 @@
-import Database from "@tauri-apps/plugin-sql"
-import { resolveResource } from "@tauri-apps/api/path"
-
-let dictDb = null
+import {
+  getDictDB as getSharedDictDB,
+} from "../../utils/databases"
 
 export async function getDictDB() {
-  if (!dictDb) {
-    const dbPath = await resolveResource("resources/dictionary.db")
-    dictDb = await Database.load(`sqlite:${dbPath}`)
-  }
-        const result = await dictDb.select(`
-    PRAGMA database_list
-  `)
-  console.log(result, 'the result is clean pls');
-  
-  return dictDb
+  return getSharedDictDB()
 }
 
 export async function lookupWord(word) {

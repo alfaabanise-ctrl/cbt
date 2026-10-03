@@ -2,6 +2,7 @@
 import { onMounted, onBeforeUnmount } from "vue"
 import { getCurrentWindow } from "@tauri-apps/api/window"
 import { durationToSeconds, secondsToDuration } from "~/utils/examTime"
+import { isMobileTauri } from "~/utils/isMobileTauri"
 
 const appWindow = getCurrentWindow()
 const appState = useAppState()
@@ -618,8 +619,8 @@ onMounted( async () => {
       
 })
 onBeforeUnmount(async () => {
- 
-   
+  if (isMobileTauri()) return
+
   await appWindow.setFullscreen(false)
   await appWindow.setDecorations(true)
   await appWindow.setResizable(true)

@@ -3,6 +3,7 @@ import {
   getQuestionsDB,
   getLessonsDB,
 } from "./databases"
+import { scoreLessonForSelfStudy } from "./lessonTeachingScore"
 
 // ============================================================
 // GLOBAL SAVE LOCK
@@ -957,6 +958,11 @@ export async function saveLearning(
             cleanText(lesson?.summary)
 
           const blocks = serializeBlocks(lesson?.blocks)
+          const teachingScore = scoreLessonForSelfStudy(
+            cleanTitle,
+            summary,
+            blocks
+          )
 
           const searchText =
             cleanText(
@@ -985,7 +991,10 @@ export async function saveLearning(
             summary,
             blocks,
             searchText,
-            orderIndex
+            orderIndex,
+            teachingScore.score,
+            teachingScore.level,
+            JSON.stringify(teachingScore.feedback)
           ])
 
 
@@ -1007,7 +1016,10 @@ export async function saveLearning(
             "summary",
             "blocks",
             "search_text",
-            "order_index"
+            "order_index",
+            "teaching_score",
+            "teaching_level",
+            "teaching_feedback"
           ],
           rows
         )

@@ -1,6 +1,7 @@
 import { ref, computed } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { Store } from "@tauri-apps/plugin-store";
+import { isMobileTauri } from "~/utils/isMobileTauri";
 
 type OfflineLicense = {
   activationId: string;
@@ -23,6 +24,7 @@ const license = ref<OfflineLicense | null>(null);
 const initialized = ref(false);
 
 let store: Store | null = null;
+let initializationPromise: Promise<void> | null = null;
 
 export const useExamTipsAuth = () => {
   const isLoggedIn = computed(() => !!user.value);
@@ -43,15 +45,25 @@ export const useExamTipsAuth = () => {
   const initialize = async () => {
     if (initialized.value) return;
 
-    store = await Store.load("exam-tips-session.json");
+    if (!initializationPromise) {
+      initializationPromise = (async () => {
+        const loadedStore = await Store.load("exam-tips-session.json");
 
-    user.value =
-      await store.get<LocalUser>("user");
+        user.value =
+          await loadedStore.get<LocalUser>("user");
 
-    license.value =
-      await store.get<OfflineLicense>("license");
+        license.value =
+          await loadedStore.get<OfflineLicense>("license");
 
-    initialized.value = true;
+        store = loadedStore;
+        initialized.value = true;
+      })().catch((error) => {
+        initializationPromise = null;
+        throw error;
+      });
+    }
+
+    await initializationPromise;
   };
 
   const saveUser = async (newUser: LocalUser) => {
@@ -75,6 +87,19 @@ export const useExamTipsAuth = () => {
   };
 
   const getDeviceId = async () => {
+    if (isMobileTauri()) {
+      if (!store) await initialize();
+
+      let deviceId = await store!.get<string>("device-id");
+      if (!deviceId) {
+        deviceId = crypto.randomUUID();
+        await store!.set("device-id", deviceId);
+        await store!.save();
+      }
+
+      return deviceId;
+    }
+
     return await invoke<string>("get_device_id");
   };
 

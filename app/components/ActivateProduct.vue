@@ -440,6 +440,7 @@ const loading = ref(false)
 const purchaseLoading = ref(false)
 
 const deviceId = ref('')
+const { getDeviceId } = useExamTipsAuth()
 
 const message = ref('')
 const messageType = ref('success')
@@ -529,11 +530,8 @@ const loadDeviceId = async () => {
       import.meta.client &&
       window.__TAURI__
     ) {
-      const { invoke } =
-        await import('@tauri-apps/api/core')
-
       deviceId.value =
-        await invoke('get_device_id')
+        await getDeviceId()
     }
   } catch (error) {
     console.error(
@@ -807,4 +805,3 @@ onMounted(async () => {
   await loadDeviceId()
 })
 </script>
-

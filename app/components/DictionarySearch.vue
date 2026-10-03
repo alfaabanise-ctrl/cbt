@@ -101,9 +101,27 @@
         <span>Searching…</span>
       </div>
 
+      <div
+        v-if="error"
+        class="ds-empty"
+        role="alert"
+      >
+        <div class="ds-empty__mark ds-empty__mark--bad">
+          <Icon name="lucide:triangle-alert" />
+        </div>
+
+        <h2 class="ds-empty__title">
+          Dictionary couldn't be loaded
+        </h2>
+
+        <p class="ds-empty__sub">
+          {{ errorMessage }}
+        </p>
+      </div>
+
       <!-- EMPTY / IDLE STATE -->
       <div
-        v-if="!query && !currentWord"
+        v-if="!error && !query && !currentWord"
         class="ds-empty"
       >
         <div class="ds-empty__mark">
@@ -121,7 +139,7 @@
 
       <!-- NOT FOUND -->
       <div
-        v-if="notFound && query"
+        v-if="!error && notFound && query"
         class="ds-empty"
       >
         <div class="ds-empty__mark ds-empty__mark--bad">
@@ -139,7 +157,7 @@
 
       <!-- WORD DETAIL CARD -->
       <article
-        v-if="currentWord"
+        v-if="!error && currentWord"
         class="index-card"
       >
         <!-- CARD HEADER -->
@@ -227,6 +245,7 @@ const {
   results,
   currentWord,
   loading,
+  error,
   notFound,
   search,
   lookup,
@@ -241,6 +260,11 @@ const query = ref('')
 const inputEl = ref(null)
 const highlighted = ref(-1)
 const lastLookedUp = ref('')
+const errorMessage = computed(() => {
+  return error.value instanceof Error
+    ? error.value.message
+    : String(error.value || 'An unexpected dictionary error occurred.')
+})
 
 let debounceTimer = null
 

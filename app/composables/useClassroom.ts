@@ -136,9 +136,32 @@ const getLessonsFromSubject = (subject: any): any[] => {
   return []
 }
 
-const getSubjectLessonCount = (subject: any): number => {
+export const getSubjectLessonCount = (subject: any): number => {
+  if (!subject) return 0
+
   const lessons = getLessonsFromSubject(subject)
-  return lessons.length || Math.max(0, Number(subject?.lessonCount) || 0)
+
+  if (Array.isArray(lessons) && lessons.length > 0) {
+    return lessons.length
+  }
+
+  const lessonCount = Number(subject?.lessonCount ?? subject?.questionCount)
+  if (Number.isFinite(lessonCount) && lessonCount > 0) {
+    return lessonCount
+  }
+
+  if (Array.isArray(subject?.topics)) {
+    return subject.topics.reduce((total: number, topic: any) => {
+      const topicLessons = Array.isArray(topic?.lessons)
+        ? topic.lessons.length
+        : Array.isArray(topic?.contents)
+          ? topic.contents.length
+          : 0
+      return total + topicLessons
+    }, 0)
+  }
+
+  return 0
 }
 
 /* =========================================================

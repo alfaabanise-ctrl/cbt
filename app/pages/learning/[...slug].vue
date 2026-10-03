@@ -857,16 +857,14 @@
 
               <p class="mt-2 text-[11px] leading-5 text-slate-500">
                 <span v-if="!isLessonRead(currentLesson)">
-                  {{ remainingReadingMinutes }} minute(s) remaining.
-                  Switching tabs pauses the reading timer.
+                  Scroll to the lesson navigation buttons to mark this lesson as read.
                 </span>
 
                 <span
                   v-else
                   class="font-semibold text-emerald-600"
                 >
-                  Great work! This lesson has been automatically marked
-                  as read.
+                  Great work! This lesson has been marked as read.
                 </span>
               </p>
             </div>
@@ -878,6 +876,7 @@
 
           <div
             class="mt-8 flex items-stretch justify-between gap-3 border-t border-slate-200 pt-6"
+            ref="lessonCompletionTarget"
           >
             <!-- PREVIOUS -->
             <NuxtLink
@@ -991,6 +990,7 @@
 import {
   ref,
   computed,
+  nextTick,
   watch,
   onMounted,
   onBeforeUnmount,
@@ -1033,10 +1033,11 @@ const {
   readingCompleted,
   requiredReadingMinutes,
   readingProgressPercent,
-  remainingReadingMinutes,
   loadLessonProgress,
   getLessonTime,
   isLessonRead,
+  markLessonAsRead,
+  recordLastOpenedLesson,
   getSubjectProgress,
   flushReadingTime,
   resetReadingTracker,
@@ -1063,6 +1064,55 @@ const routeSegments = computed(() => {
 
   return [];
 });
+
+const lessonCompletionTarget = ref<HTMLElement | null>(null);
+let lessonCompletionObserver: IntersectionObserver | null = null;
+
+const observeLessonCompletion = async () => {
+  lessonCompletionObserver?.disconnect();
+  lessonCompletionObserver = null;
+
+  if (
+    !import.meta.client ||
+    !currentLesson.value ||
+    (currentLesson.value.slug &&
+      currentLesson.value.slug !== routeLessonSlug.value) ||
+    isLessonRead(currentSubjectKey.value, currentLesson.value) ||
+    !lessonCompletionTarget.value
+  ) {
+    return;
+  }
+
+  await nextTick();
+
+  const target = lessonCompletionTarget.value;
+  if (!target) return;
+
+  lessonCompletionObserver = new IntersectionObserver(
+    (entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+
+      lessonCompletionObserver?.disconnect();
+      lessonCompletionObserver = null;
+
+      const lesson = currentLesson.value;
+      if (
+        lesson &&
+        (!lesson.slug || lesson.slug === routeLessonSlug.value) &&
+        !isLessonRead(currentSubjectKey.value, lesson)
+      ) {
+        markLessonAsRead(
+          currentSubjectKey.value,
+          lesson,
+          totalLessons.value,
+        );
+      }
+    },
+    { threshold: 0.25 },
+  );
+
+  lessonCompletionObserver.observe(target);
+};
 
 const routeSubjectSlug = computed(() => {
   return routeSegments.value[0] || "";
@@ -1496,10 +1546,14 @@ const openLessonBySlug = async (
   await loadLesson(slug);
 
   if (currentLesson.value) {
+    recordLastOpenedLesson(
+      currentSubjectKey.value,
+      currentLesson.value,
+    );
+
     resetReadingTracker(
       currentSubjectKey.value,
       currentLesson.value,
-      totalLessons.value,
     );
   }
 
@@ -1725,7 +1779,6 @@ const handleReadingVisibility =
       resetReadingTracker(
         currentSubjectKey.value,
         currentLesson.value,
-        totalLessons.value,
       );
     }
   };
@@ -1782,6 +1835,21 @@ watch(
   },
 );
 
+watch(
+  () => [
+    currentSubjectKey.value,
+    currentLesson.value?.slug,
+    isLessonRead(
+      currentSubjectKey.value,
+      currentLesson.value,
+    ),
+  ],
+  () => {
+    void observeLessonCompletion();
+  },
+  { flush: "post" },
+);
+
 /*
 |--------------------------------------------------------------------------
 | LIFECYCLE
@@ -1828,6 +1896,8 @@ onBeforeUnmount(() => {
   }
 
   if (import.meta.client) {
+    lessonCompletionObserver?.disconnect();
+    lessonCompletionObserver = null;
     document.removeEventListener(
       "visibilitychange",
       handleReadingVisibility,

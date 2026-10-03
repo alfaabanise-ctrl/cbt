@@ -1,75 +1,105 @@
 <template>
-  <div class="h-dvh  sm:overflow-hidden w-dvw ">
+  <div
+    v-if="!startupReady"
+    class="flex h-dvh w-dvw items-center justify-center bg-slate-950 p-6 text-white"
+  >
+    <div class="w-full max-w-md text-center">
+      <div
+        class="mx-auto mb-5 h-10 w-10 animate-spin rounded-full border-4 border-white/20 border-t-cyan-400"
+        :class="{ 'hidden': startupError }"
+      />
+      <h1 class="text-xl font-semibold">Starting CBT</h1>
+      <p class="mt-2 text-sm text-white/70">
+        {{ startupError ? "Startup could not finish." : startupStep }}
+      </p>
+      <pre
+        v-if="startupError"
+        class="mt-4 max-h-40 overflow-auto whitespace-pre-wrap rounded-lg bg-black/30 p-3 text-left text-xs text-red-200"
+      >{{ startupError }}</pre>
+      <button
+        v-if="startupError"
+        type="button"
+        class="mt-5 rounded-lg bg-cyan-600 px-5 py-2 text-sm font-semibold hover:bg-cyan-500"
+        @click="initializeApp"
+      >
+        Retry startup
+      </button>
+    </div>
+  </div>
+  <div v-else class="h-dvh w-dvw sm:overflow-hidden">
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
   </div>
 </template>
 
-<script setup>
-import { computed, onMounted } from "vue"
-import platform from "~/platforms"
+<script setup lang="ts">
+import { onMounted, ref } from "vue"
 import { initializeDatabases } from "~/utils/databases"
-const auth = useExamTipsAuth();
+import { initializeBundledDatabases } from "~/utils/database/databaseBootstrap"
+import { isMobileTauri } from "~/utils/isMobileTauri"
+import { isTauri } from "@tauri-apps/api/core"
+import { invoke } from "@tauri-apps/api/core"
 import { getCurrentWindow } from "@tauri-apps/api/window"
-import { LogicalSize } from "@tauri-apps/api/dpi"
 
-await auth.initialize()
-const isTauri = computed(() => {
-  return import.meta.client && !!window.__TAURI_INTERNALS__
-})
+const auth = useExamTipsAuth()
+const startupReady = ref(false)
+const startupStep = ref("Preparing the application...")
+const startupError = ref("")
 
-if (import.meta.client && isTauri.value) {
-  const appWindow = getCurrentWindow()
+const initializeApp = async (): Promise<void> => {
+  startupError.value = ""
+  startupReady.value = false
 
-  if (appWindow.label === "main") {
-    await initializeDatabases()
-    await platform.dicDatase.getDictDB()
-    console.log("Tauri databases initialized at startup")
+  try {
+    startupStep.value = "Loading your saved session..."
+    await auth.initialize()
+
+    if (import.meta.client && isTauri()) {
+      const appWindow = getCurrentWindow()
+
+      if (appWindow.label === "main") {
+        startupStep.value = "Preparing local content databases..."
+        await initializeBundledDatabases()
+
+        startupStep.value = "Initializing the application databases..."
+        await initializeDatabases()
+
+        console.info("Tauri databases initialized at startup")
+      }
+
+      if (appWindow.label === "splashscreen") {
+        startupReady.value = true
+        return
+      }
+
+      if (appWindow.label === "main" && !isMobileTauri()) {
+        await appWindow.center()
+        await appWindow.setResizable(true)
+        await invoke("show_main_window")
+      }
+    }
+
+    startupReady.value = true
+  } catch (error) {
+    console.error("Application startup failed:", error)
+    startupError.value =
+      error instanceof Error ? error.message : String(error)
+
+    if (
+      import.meta.client &&
+      isTauri() &&
+      getCurrentWindow().label === "main" &&
+      !isMobileTauri()
+    ) {
+      await invoke("show_main_window").catch((showError) => {
+        console.error("Failed to show startup error:", showError)
+      })
+    }
   }
 }
 
-
-onMounted(async () => {
-   console.log (auth, "🔥🔥🔥 APP.VUE IS RUNNING 🔥🔥🔥")
-  console.log(await auth.getDeviceId(), "🔥🔥🔥 APP.VUE IS RUNNING 🔥🔥🔥")
-
-
-
-  console.log("🔥🔥🔥 ON MOUNTED IS RUNNING 🔥🔥🔥")
-  console.log("isTauri:", isTauri.value)
-
-  if (!isTauri.value) {
-    return
-  }
-
-  try {
-    const appWindow = getCurrentWindow()
-
-    // Only run inside the Tauri desktop application
-    if (appWindow.label === "splashscreen") {
-      try {
-        const { invoke } = await import("@tauri-apps/api/core")
-        await invoke("show_main_window")
-      } catch (error) {
-        console.error("Failed to show main window:", error)
-      }
-
-      return
-    }
-
-    if (appWindow.label !== "main") {
-      return
-    }
-
-    // await appWindow.setSize(
-    //   new LogicalSize(390, 844)
-    // )
-
-    await appWindow.center()
-    await appWindow.setResizable(true)
-  } catch (error) {
-    console.error("Failed to initialize Tauri databases:", error)
-  }
+onMounted(() => {
+  void initializeApp()
 })
 </script>

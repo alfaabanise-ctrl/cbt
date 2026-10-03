@@ -9,8 +9,7 @@ const DATABASE_DIR = 'databases'
 
 const databases = [
   'questions.db',
-  'lessons.db',
-  'dictionary.db'
+  'lessons.db'
 ]
 
 export async function installBundledDatabases() {

@@ -1,4 +1,4 @@
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(() => {
   const auth = useExamTipsAuth()
   const router = useRouter()
 
@@ -11,12 +11,9 @@ export default defineNuxtPlugin(async () => {
     "/activate",
   ]
 
-  try {
-    console.log("🔐 Auth plugin starting...")
+  console.log("🔐 Auth plugin starting...")
 
-    // Initialize authentication
-    await auth.initialize()
-
+  void auth.initialize().then(async () => {
     console.log("✅ Auth initialized:", {
       isLoggedIn: auth.isLoggedIn.value,
       isActivated: auth.isActivated.value,
@@ -24,30 +21,16 @@ export default defineNuxtPlugin(async () => {
 
     const currentPath = router.currentRoute.value.path
 
-    // Allow public pages
     if (publicPages.includes(currentPath)) {
       console.log("🌐 Public page:", currentPath)
       return
     }
 
-    // User is not logged in
-    // if (!auth.isLoggedIn.value) {
-    //   console.log("🔒 User is not logged in")
-
-    //   await navigateTo("/activate", {
-    //     replace: true,
-    //   })
-
-    //   return
-    // }
-
-    // User is logged in but license is not activated
-   
-await navigateTo("/", {
-        replace: true,
-      })
+    await navigateTo("/", {
+      replace: true,
+    })
     console.log("✅ Authentication access granted")
-  } catch (error) {
+  }).catch((error) => {
     console.error("❌ Auth plugin failed:", error)
-  }
+  })
 })

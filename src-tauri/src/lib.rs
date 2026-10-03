@@ -11,15 +11,13 @@ use tauri::Manager;
 
 #[tauri::command]
 fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
-    // Close splash screen
-    if let Some(splash) = app.get_webview_window("splashscreen") {
-        splash.close().map_err(|e| e.to_string())?;
-    }
-
-    // Show and focus main window
     if let Some(main) = app.get_webview_window("main") {
         main.show().map_err(|e| e.to_string())?;
         main.set_focus().map_err(|e| e.to_string())?;
+    }
+
+    if let Some(splash) = app.get_webview_window("splashscreen") {
+        splash.close().map_err(|e| e.to_string())?;
     }
 
     Ok(())
@@ -31,7 +29,7 @@ fn show_main_window(app: tauri::AppHandle) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default()
 
         // ==========================================
         // STRONGHOLD
@@ -66,14 +64,11 @@ pub fn run() {
         // ==========================================
         .plugin(tauri_plugin_opener::init())
 
-        // ==========================================
-        // SINGLE INSTANCE
-        // ==========================================
-        //
-        // Prevents multiple copies of Abanise CBT
-        // from running at the same time.
-        //
-        .plugin(
+        // Desktop-only: mobile operating systems manage app instances.
+        ;
+
+    #[cfg(not(any(target_os = "android", target_os = "ios")))]
+    let builder = builder.plugin(
             tauri_plugin_single_instance::init(
                 |app, _args, _cwd| {
                     println!(
@@ -89,8 +84,9 @@ pub fn run() {
                     }
                 },
             ),
-        )
+        );
 
+    builder
         // ==========================================
         // FILESYSTEM
         // ==========================================
