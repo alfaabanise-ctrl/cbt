@@ -1,4 +1,5 @@
 import Database from "@tauri-apps/plugin-sql"
+import { readTextFile } from "@tauri-apps/plugin-fs"
 import { resolveResource } from "@tauri-apps/api/path"
 
 type DatabaseName =
@@ -417,6 +418,232 @@ async function initializeQuestionsDatabase(db: any) {
 }
 
 
+type LessonSeedPayload = {
+  subjects: Array<{
+    id: string
+    name: string
+    icon?: string | null
+    description?: string | null
+    order_index?: number | null
+  }>
+  topics: Array<{
+    id: string
+    subject_id: string
+    topic_number: string | number | null
+    title: string
+    order_index?: number | null
+  }>
+  lessons: Array<{
+    id: string
+    topic_id: string
+    subject_id: string
+    topic_number: string | number | null
+    slug?: string | null
+    title: string
+    summary?: string | null
+    blocks?: unknown
+    search_text?: string | null
+    order_index?: number | null
+  }>
+}
+
+async function loadBundledLessonSeed(): Promise<LessonSeedPayload | null> {
+  try {
+    const resourcePath = await resolveResource("resources/lessonss.json")
+    const rawText = await readTextFile(resourcePath)
+    const parsed = JSON.parse(rawText) as Partial<LessonSeedPayload>
+
+    if (
+      !parsed ||
+      !Array.isArray(parsed.subjects) ||
+      !Array.isArray(parsed.topics) ||
+      !Array.isArray(parsed.lessons)
+    ) {
+      return null
+    }
+
+    return parsed as LessonSeedPayload
+  } catch (error) {
+    console.warn("Bundled starter lesson seed not found or unreadable:", error)
+    return null
+  }
+}
+
+function normalizeSeedText(input: unknown): string {
+  if (!input) return ""
+
+  if (typeof input === "string") {
+    return input
+  }
+
+  if (input && typeof input === "object") {
+    try {
+      return JSON.stringify(input)
+    } catch {
+      return String(input)
+    }
+  }
+
+  return String(input)
+}
+
+async function seedStarterLessonData(db: any): Promise<void> {
+  const counts = await db.select<
+    { subjects: number; topics: number; lessons: number }[]
+  >(`
+    SELECT
+      (SELECT COUNT(*) FROM subjects) AS subjects,
+      (SELECT COUNT(*) FROM topics) AS topics,
+      (SELECT COUNT(*) FROM lessons) AS lessons
+  `)
+
+  const subjectCount = Number(counts?.[0]?.subjects ?? 0)
+  const topicCount = Number(counts?.[0]?.topics ?? 0)
+  const lessonCount = Number(counts?.[0]?.lessons ?? 0)
+
+  if (subjectCount > 0 && topicCount > 0 && lessonCount > 0) {
+    return
+  }
+
+  const seed = await loadBundledLessonSeed()
+  if (!seed) {
+    return
+  }
+
+  const subjectRows = seed.subjects.filter((subject) => subject?.id && subject?.name)
+  const topicRows = seed.topics.filter((topic) => topic?.id && topic?.subject_id && topic?.title)
+
+  if (!subjectRows.length || !topicRows.length) {
+    return
+  }
+
+  const lessonsByTopic = new Map<string, LessonSeedPayload["lessons"][number]>()
+  for (const lesson of seed.lessons) {
+    if (!lesson?.topic_id || !lesson?.id) continue
+    if (!lessonsByTopic.has(lesson.topic_id)) {
+      lessonsByTopic.set(lesson.topic_id, lesson)
+    }
+  }
+
+  const buildFallbackLesson = (topic: LessonSeedPayload["topics"][number]) => ({
+    id: `${topic.id}-starter`,
+    topic_id: topic.id,
+    subject_id: topic.subject_id,
+    topic_number: topic.topic_number,
+    slug: `${topic.id}-starter`,
+    title: `Getting started: ${topic.title}`,
+    summary: `A short starter lesson to keep this topic available while you are offline or before a full download is activated.`,
+    blocks: [
+      {
+        type: "heading",
+        level: 2,
+        text: topic.title,
+      },
+      {
+        type: "paragraph",
+        text_html: `This is a starter lesson for <strong>${topic.title}</strong>. Use it as a quick starting point while the full content is not yet available or while you are offline.`,
+      },
+      {
+        type: "note",
+        text_html: "Start here, then continue with the full lesson set when it becomes available.",
+      },
+    ],
+    search_text: `${topic.title} starter lesson introduction overview`,
+    order_index: 0,
+  })
+
+  await db.execute("BEGIN TRANSACTION")
+
+  try {
+    for (const subject of subjectRows) {
+      await db.execute(
+        `
+        INSERT OR IGNORE INTO subjects (id, name, icon, description, order_index)
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          subject.id,
+          subject.name,
+          subject.icon ?? null,
+          subject.description ?? null,
+          Number(subject.order_index ?? 0),
+        ]
+      )
+    }
+
+    for (const topic of topicRows) {
+      await db.execute(
+        `
+        INSERT OR IGNORE INTO topics (id, subject_id, topic_number, title, order_index)
+        VALUES (?, ?, ?, ?, ?)
+        `,
+        [
+          topic.id,
+          topic.subject_id,
+          String(topic.topic_number ?? "0"),
+          topic.title,
+          Number(topic.order_index ?? 0),
+        ]
+      )
+    }
+
+    for (const topic of topicRows) {
+      const draftLesson = lessonsByTopic.get(topic.id) ?? buildFallbackLesson(topic)
+
+      const normalizedTitle = String(draftLesson.title || topic.title).trim()
+      const normalizedSlug = String(draftLesson.slug || normalizedTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || topic.id).trim()
+      const blocksValue = typeof draftLesson.blocks === "string" ? draftLesson.blocks : JSON.stringify(draftLesson.blocks ?? [])
+      const summary = String(draftLesson.summary ?? "").trim()
+      const searchText = [
+        normalizedTitle,
+        summary,
+        normalizeSeedText(draftLesson.blocks),
+        normalizeSeedText(draftLesson.search_text),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+
+      await db.execute(
+        `
+        INSERT OR IGNORE INTO lessons (
+          id,
+          topic_id,
+          subject_id,
+          topic_number,
+          slug,
+          title,
+          summary,
+          blocks,
+          search_text,
+          order_index
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `,
+        [
+          draftLesson.id,
+          draftLesson.topic_id,
+          draftLesson.subject_id,
+          String(draftLesson.topic_number ?? topic.topic_number ?? "0"),
+          normalizedSlug,
+          normalizedTitle,
+          summary || null,
+          blocksValue,
+          searchText || null,
+          Number(draftLesson.order_index ?? 0),
+        ]
+      )
+    }
+
+    await db.execute("COMMIT")
+    console.log("✅ Starter lesson seed inserted from bundled curriculum")
+  } catch (error) {
+    await db.execute("ROLLBACK")
+    console.error("Failed to seed starter lesson data:", error)
+    throw error
+  }
+}
+
 // ============================================================
 // LESSON DATABASE
 // lessons.db
@@ -727,6 +954,7 @@ async function initializeLessonsSchema(db: any) {
     )
   }
 
+  await seedStarterLessonData(db)
 
   console.log("✅ lessons.db ready")
 }
