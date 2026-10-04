@@ -3,7 +3,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "cbt",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "identifier": "com.virex.cbt",
 
   "build": {
@@ -39,6 +39,7 @@
         "minWidth": 320,
         "minHeight": 568,
         "resizable": true,
+        "maximized": true,
         "fullscreen": false,
         "center": true,
         "visible": false
@@ -67,6 +68,19 @@
       "resources/questions.db",
       "resources/lessons.db"
     ],
+
+    "windows": {
+      "wix": {
+        "bannerPath": "installer-assets/wix-banner.bmp",
+        "dialogImagePath": "installer-assets/wix-dialog.bmp"
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "uninstallerIcon": "icons/icon.ico",
+        "headerImage": "installer-assets/nsis-header.bmp",
+        "sidebarImage": "installer-assets/nsis-sidebar.bmp"
+      }
+    },
 
     "android": {
       "debugApplicationIdSuffix": ".debug"

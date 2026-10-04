@@ -509,10 +509,17 @@ function handleKeyboard(event) {
 
 ///KEY HANDLING
 onMounted(async () => {
-  //   await appWindow.setDecorations(false)
-  // await appWindow.setResizable(false)
-  // await appWindow.setFullscreen(true)
-  // await appWindow.setAlwaysOnTop(true)
+  if (
+    !isMobileTauri() &&
+    window.__TAURI_INTERNALS__
+  ) {
+    try {
+      await appWindow.setFullscreen(true)
+    } catch (error) {
+      console.error("Failed to enter exam fullscreen:", error)
+    }
+  }
+
   window.addEventListener("keydown", handleKeyboard)
    window.addEventListener("keydown", preventRefresh)
     document.addEventListener("contextmenu", e => {
@@ -619,12 +626,22 @@ onMounted( async () => {
       
 })
 onBeforeUnmount(async () => {
-  if (isMobileTauri()) return
+  if (
+    isMobileTauri() ||
+    !window.__TAURI_INTERNALS__
+  ) {
+    return
+  }
 
-  await appWindow.setFullscreen(false)
-  await appWindow.setDecorations(true)
-  await appWindow.setResizable(true)
-  await appWindow.setAlwaysOnTop(false)
+  try {
+    await appWindow.setFullscreen(false)
+    await appWindow.setDecorations(true)
+    await appWindow.setResizable(true)
+    await appWindow.setAlwaysOnTop(false)
+    await appWindow.maximize()
+  } catch (error) {
+    console.error("Failed to restore the application window:", error)
+  }
 })
 
 

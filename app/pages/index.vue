@@ -1,7 +1,7 @@
 <template>
   <div
     class="flex  pt-10 min-h-dvh w-full max-w-full overflow-x-hidden bg-cover bg-center bg-fixed"
-    style="background-image: url('/image/background.png')"
+    style="background-image: url('./Image/background.png')"
   >
     <!-- NAVIGATION -->
     <NavigationNavbar

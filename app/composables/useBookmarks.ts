@@ -1,5 +1,60 @@
 import { getDB } from "~/platforms/desktop/database";
 
+const getExplanationData = (question) => {
+  const source =
+    question?.explanation ??
+    question?.explaination ??
+    null;
+
+  let explanation = source;
+  if (typeof source === "string") {
+    try {
+      explanation = JSON.parse(source);
+    } catch {
+      explanation = source;
+    }
+  }
+
+  const simple =
+    typeof explanation === "object" && explanation
+      ? explanation.simplifiedExplanation ??
+        explanation.simpleExplanation ??
+        explanation.simple_explanation
+      : null;
+
+  const detailed =
+    typeof explanation === "object" && explanation
+      ? explanation.explanation ??
+        question?.solution_html ??
+        question?.solution ??
+        question?.explanation_html ??
+        question?.explaination
+      : explanation ??
+        question?.solution_html ??
+        question?.solution ??
+        question?.explanation_html;
+
+  const commonMistakes =
+    typeof explanation === "object" && explanation
+      ? explanation.commonMistakes ??
+        explanation.common_mistakes ??
+        question?.commonMistakes ??
+        []
+      : question?.commonMistakes ?? [];
+
+  if (!simple && !detailed && !commonMistakes.length) {
+    return null;
+  }
+
+  return JSON.stringify({
+    simplifiedExplanation: simple || null,
+    explanation: detailed || null,
+    commonMistakes: Array.isArray(commonMistakes)
+      ? commonMistakes
+      : [],
+  });
+};
+
 export const useBookmarks = () => {
   /**
    * Generate a unique ID for a question.
@@ -63,7 +118,7 @@ export const useBookmarks = () => {
         questionText,
         options,
         question.correctAnswer ?? question.answer ?? null,
-        question.explanation ?? null,
+        getExplanationData(question),
       ],
     );
 

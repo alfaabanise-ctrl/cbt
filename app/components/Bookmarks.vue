@@ -431,7 +431,7 @@
 
             <!-- EXPLANATION -->
             <div
-              v-if="bookmark.explanation"
+              v-if="bookmarkExplanation(bookmark).html || bookmarkExplanation(bookmark).mistakes.length"
               class="mt-3 rounded-lg bg-amber-50 p-3"
             >
               <div class="flex items-start gap-2">
@@ -442,14 +442,40 @@
 
                 <div>
                   <p class="text-xs font-semibold text-amber-800">
-                    Explanation
+                    {{ bookmarkExplanation(bookmark).label }}
                   </p>
 
-                  <p
-                    class="mt-1 whitespace-pre-wrap text-xs leading-5 text-amber-700"
+                  <div
+                    v-if="bookmarkExplanation(bookmark).html"
+                    class="bookmark-explanation mt-1 text-xs leading-5 text-amber-700"
+                    v-html="bookmarkExplanation(bookmark).html"
+                  />
+
+                  <div
+                    v-if="bookmarkExplanation(bookmark).mistakes.length"
+                    class="mt-3 space-y-2"
                   >
-                    {{ bookmark.explanation }}
-                  </p>
+                    <p class="text-xs font-semibold text-amber-800">
+                      Common Mistakes
+                    </p>
+
+                    <div
+                      v-for="(mistake, mistakeIndex) in bookmarkExplanation(bookmark).mistakes"
+                      :key="mistakeIndex"
+                      class="rounded-lg border border-amber-100 bg-white p-2 text-xs leading-5 text-slate-700"
+                    >
+                      <div
+                        v-if="mistake.mistake"
+                        class="bookmark-explanation"
+                        v-html="mistake.mistake"
+                      />
+                      <div
+                        v-if="mistake.whyWrong"
+                        class="bookmark-explanation mt-1 text-slate-500"
+                        v-html="mistake.whyWrong"
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -516,6 +542,8 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue"
+import DOMPurify from "dompurify"
+import { toHtml } from "~/composables/formatHtml"
 import { useBookmarks } from "~/composables/useBookmarks"
 
 // ==========================================
@@ -642,6 +670,76 @@ const formatDate = (value) => {
   })
 }
 
+const parseExplanation = (value) => {
+  if (!value) return null
+  if (typeof value === "object") return value
+
+  if (typeof value === "string") {
+    try {
+      return JSON.parse(value)
+    } catch {
+      return value
+    }
+  }
+
+  return null
+}
+
+const toSafeExplanationHtml = (value) => {
+  if (typeof value !== "string" || !value.trim()) return ""
+
+  const html = /<\/?[a-z][^>]*>/i.test(value)
+    ? value
+    : toHtml(value)
+
+  return DOMPurify.sanitize(html || "")
+}
+
+const bookmarkExplanation = (bookmark) => {
+  const explanation = parseExplanation(bookmark?.explanation)
+  const simple =
+    typeof explanation === "object" && explanation
+      ? explanation.simplifiedExplanation ??
+        explanation.simpleExplanation ??
+        explanation.simple_explanation
+      : null
+  const fallback =
+    typeof explanation === "object" && explanation
+      ? explanation.explanation ??
+        bookmark?.solution_html ??
+        bookmark?.solution ??
+        bookmark?.explanation_html
+      : explanation
+  const selected = [simple, fallback].find(
+    (value) => typeof value === "string" && value.trim()
+  )
+  const mistakes =
+    typeof explanation === "object" && explanation
+      ? explanation.commonMistakes ??
+        explanation.common_mistakes ??
+        []
+      : []
+
+  return {
+    label: simple && selected === simple ? "Simple Explanation" : "Explanation",
+    html: toSafeExplanationHtml(selected),
+    mistakes: Array.isArray(mistakes)
+      ? mistakes
+          .map((mistake) => ({
+            mistake: toSafeExplanationHtml(
+              typeof mistake === "string"
+                ? mistake
+                : mistake?.mistake ?? mistake?.text ?? ""
+            ),
+            whyWrong: toSafeExplanationHtml(
+              mistake?.whyWrong ?? mistake?.why_wrong ?? ""
+            ),
+          }))
+          .filter((mistake) => mistake.mistake || mistake.whyWrong)
+      : [],
+  }
+}
+
 // ==========================================
 // PARSE OPTIONS
 // ==========================================
@@ -759,5 +857,23 @@ input,
 select,
 button {
   max-width: 100%;
+}
+
+.bookmark-explanation :deep(p) {
+  margin: 0.25rem 0;
+}
+
+.bookmark-explanation :deep(ul),
+.bookmark-explanation :deep(ol) {
+  margin: 0.25rem 0;
+  padding-left: 1.25rem;
+}
+
+.bookmark-explanation :deep(ul) {
+  list-style: disc;
+}
+
+.bookmark-explanation :deep(ol) {
+  list-style: decimal;
 }
 </style>

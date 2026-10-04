@@ -80,7 +80,6 @@ const initializeApp = async (): Promise<void> => {
       }
 
       if (appWindow.label === "main" && !isMobileTauri()) {
-        await appWindow.center()
         await appWindow.setResizable(true)
         await invoke("show_main_window")
       }

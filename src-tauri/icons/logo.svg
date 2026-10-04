@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#071B55"/>
+      <stop offset="1" stop-color="#00113F"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#19BFFF"/>
+      <stop offset="1" stop-color="#075BEA"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#11D9FF"/>
+      <stop offset="1" stop-color="#24AFFF"/>
+    </linearGradient>
+    <linearGradient id="bookLeft" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#20B7FF"/>
+      <stop offset="1" stop-color="#0755E5"/>
+    </linearGradient>
+    <linearGradient id="bookRight" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#20B7FF"/>
+      <stop offset="1" stop-color="#0755E5"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded app tile -->
+  <rect x="28" y="28" width="968" height="968" rx="128" fill="url(#bg)" stroke="#1556D8" stroke-width="12"/>
+
+  <!-- Checklist -->
+  <g fill="url(#blue)">
+    <circle cx="390" cy="218" r="27"/>
+    <circle cx="390" cy="282" r="27"/>
+    <circle cx="390" cy="346" r="27"/>
+    <rect x="430" y="190" width="250" height="55" rx="27.5"/>
+    <rect x="430" y="254" width="220" height="55" rx="27.5"/>
+    <rect x="430" y="318" width="175" height="55" rx="27.5"/>
+  </g>
+
+  <!-- Check mark -->
+  <path d="M435 425 L500 490 L650 330"
+        fill="none"
+        stroke="url(#cyan)"
+        stroke-width="62"
+        stroke-linecap="round"
+        stroke-linejoin="round"/>
+
+  <!-- Open book -->
+  <path d="M145 420
+           C245 468 335 520 435 615
+           C452 631 463 650 463 675
+           L463 820
+           C360 730 255 690 160 665
+           C143 660 132 646 132 626
+           L132 442
+           C132 424 138 417 145 420 Z"
+        fill="url(#bookLeft)"/>
+
+  <path d="M879 420
+           C779 468 689 520 589 615
+           C572 631 561 650 561 675
+           L561 820
+           C664 730 769 690 864 665
+           C881 660 892 646 892 626
+           L892 442
+           C892 424 886 417 879 420 Z"
+        fill="url(#bookRight)"/>
+
+  <!-- Book lower accent -->
+  <path d="M136 555
+           C250 596 365 655 463 745
+           L463 820
+           C360 730 255 690 160 665
+           C143 660 132 646 132 626 Z"
+        fill="#0649C8" opacity=".72"/>
+
+  <path d="M888 555
+           C774 596 659 655 561 745
+           L561 820
+           C664 730 769 690 864 665
+           C881 660 892 646 892 626 Z"
+        fill="#0649C8" opacity=".72"/>
+
+  <!-- Center spine -->
+  <path d="M463 675 C474 650 490 630 512 612 C534 630 550 650 561 675 L561 820 C545 802 529 787 512 774 C495 787 479 802 463 820 Z"
+        fill="#0A65F0"/>
+
+  <!-- Wordmark -->
+  <text x="512" y="914"
+        text-anchor="middle"
+        font-family="Arial, Helvetica, sans-serif"
+        font-size="132"
+        font-weight="800"
+        letter-spacing="-7">
+    <tspan fill="#FFFFFF">Exam</tspan><tspan fill="#14C8F5">Tips</tspan>
+  </text>
+</svg>
